@@ -69,9 +69,27 @@ func (p *Prompter) ReadLine(label string) (string, error) {
 
 // Select asks the user to pick one of opts and returns its Value.
 func (p *Prompter) Select(title string, opts []Option) (string, error) {
+	return p.SelectDefault(title, opts, "")
+}
+
+// SelectDefault is Select with the cursor starting on the option whose
+// Value is def; without a terminal, an empty answer picks that option.
+// An unknown def is ignored.
+func (p *Prompter) SelectDefault(title string, opts []Option, def string) (string, error) {
+	initial := 0
+	found := false
+	for i, o := range opts {
+		if o.Value == def {
+			initial, found = i, true
+			break
+		}
+	}
+	if !found {
+		def = ""
+	}
 	return p.ask(
-		func() (string, error) { return p.selectNumbered(title, opts) },
-		func(width int) (string, error) { return selectMenu(p.in, p.out, width, title, opts) },
+		func() (string, error) { return p.selectNumbered(title, opts, def) },
+		func(width int) (string, error) { return selectMenu(p.in, p.out, width, title, opts, initial) },
 	)
 }
 
@@ -104,16 +122,24 @@ func (p *Prompter) ask(plain func() (string, error), interactive func(width int)
 }
 
 // selectNumbered is the non-interactive Select: a numbered list that
-// accepts either a number or an option's value.
-func (p *Prompter) selectNumbered(title string, opts []Option) (string, error) {
+// accepts either a number or an option's value, or nothing when there
+// is a default.
+func (p *Prompter) selectNumbered(title string, opts []Option, def string) (string, error) {
 	fmt.Fprintln(p.out, title)
 	for i, o := range opts {
 		fmt.Fprintf(p.out, "  %d) %s\n", i+1, o.Label)
 	}
+	label := fmt.Sprintf("Select [1-%d]: ", len(opts))
+	if def != "" {
+		label = fmt.Sprintf("Select [1-%d] (default: %s): ", len(opts), def)
+	}
 	for {
-		answer, readErr := p.ReadLine(fmt.Sprintf("Select [1-%d]: ", len(opts)))
+		answer, readErr := p.ReadLine(label)
 		answer = strings.ToLower(answer)
 
+		if answer == "" && def != "" {
+			return def, nil
+		}
 		if n, err := strconv.Atoi(answer); err == nil && n >= 1 && n <= len(opts) {
 			return opts[n-1].Value, nil
 		}

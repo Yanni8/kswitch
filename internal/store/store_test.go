@@ -129,6 +129,97 @@ func TestGetAndRemove(t *testing.T) {
 	}
 }
 
+func TestRename(t *testing.T) {
+	s, _ := openTemp(t)
+	path, err := s.Add("Prod EU", EnvProd, "red", []byte("a: 1\n"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := s.Add("Other", EnvDev, "blue", []byte("a: 2\n")); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := s.Rename("prod eu", "Staging"); err != nil {
+		t.Fatalf("Rename: %v", err)
+	}
+	k, err := s.Get("Staging")
+	if err != nil {
+		t.Fatalf("renamed entry missing: %v", err)
+	}
+	if k.Path != path || k.Environment != EnvProd || k.Color != "red" {
+		t.Errorf("renamed entry = %+v; file and metadata must be kept", k)
+	}
+	if _, err := s.Get("Prod EU"); !errors.Is(err, ErrNotFound) {
+		t.Errorf("old name still resolves: %v", err)
+	}
+
+	// Only the case changes: allowed, since it is the same entry.
+	if err := s.Rename("Staging", "staging"); err != nil {
+		t.Errorf("case-only rename: %v", err)
+	}
+	if k, _ := s.Get("staging"); k.Name != "staging" {
+		t.Errorf("case-only rename not applied: %+v", k)
+	}
+
+	if err := s.Rename("staging", "OTHER"); err == nil || !strings.Contains(err.Error(), "already exists") {
+		t.Errorf("rename onto another entry: got %v, want duplicate error", err)
+	}
+	if err := s.Rename("nope", "x"); !errors.Is(err, ErrNotFound) {
+		t.Errorf("rename unknown: got %v, want ErrNotFound", err)
+	}
+	if err := s.Rename("staging", ""); err == nil {
+		t.Error("rename to an invalid name must fail")
+	}
+}
+
+func TestSetEnvironmentAndColor(t *testing.T) {
+	s, _ := openTemp(t)
+	if _, err := s.Add("x", EnvProd, "red", []byte("a: 1\n")); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := s.SetEnvironment("X", EnvDev); err != nil {
+		t.Fatalf("SetEnvironment: %v", err)
+	}
+	if err := s.SetColor("x", "blue"); err != nil {
+		t.Fatalf("SetColor: %v", err)
+	}
+	if k, _ := s.Get("x"); k.Environment != EnvDev || k.Color != "blue" {
+		t.Errorf("entry = %+v, want dev/blue", k)
+	}
+
+	if err := s.SetEnvironment("x", "staging"); err == nil {
+		t.Error("invalid environment must be rejected")
+	}
+	if err := s.SetColor("x", ""); err == nil {
+		t.Error("empty color must be rejected")
+	}
+	if err := s.SetColor("nope", "red"); !errors.Is(err, ErrNotFound) {
+		t.Errorf("unknown entry: got %v, want ErrNotFound", err)
+	}
+}
+
+func TestUpdateKubeconfig(t *testing.T) {
+	s, _ := openTemp(t)
+	path, err := s.Add("x", EnvProd, "red", []byte("a: 1\n"))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if err := s.UpdateKubeconfig("x", []byte("a: 2\n")); err != nil {
+		t.Fatalf("UpdateKubeconfig: %v", err)
+	}
+	if data, _ := os.ReadFile(path); string(data) != "a: 2\n" {
+		t.Errorf("content = %q, want the new content", data)
+	}
+	if info, _ := os.Stat(path); info.Mode().Perm() != 0o600 {
+		t.Errorf("mode = %o, want 600", info.Mode().Perm())
+	}
+	if err := s.UpdateKubeconfig("nope", []byte("a: 3\n")); !errors.Is(err, ErrNotFound) {
+		t.Errorf("unknown entry: got %v, want ErrNotFound", err)
+	}
+}
+
 func TestAddRejectsDuplicateName(t *testing.T) {
 	s, _ := openTemp(t)
 	if _, err := s.Add("Prod EU", EnvProd, "red", []byte("a: 1\n")); err != nil {

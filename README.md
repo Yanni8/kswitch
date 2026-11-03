@@ -27,6 +27,15 @@ Kubeconfigs are stored with mode `0600` under `~/.config/kswitch/configs/`
 (override the directory with `KSWITCH_CONFIG_DIR`), and the metadata in
 `~/.config/kswitch/state.json`.
 
+### `kswitch edit [name]`
+
+Changes one thing about a kubeconfig (alias: `update`). Without a name
+you pick one from a menu, then choose what to change: the kubeconfig
+contents (opened in your editor, pre-filled with the current file), the
+name, the environment, or the color. The current value is suggested or
+preselected, so Enter keeps it. Renaming keeps the stored file's name,
+so shells already using it are unaffected.
+
 ### `kswitch list`
 
 Lists the configured kubeconfigs with their environment and color

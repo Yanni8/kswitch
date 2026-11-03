@@ -32,11 +32,18 @@ func setupAdd(t *testing.T, editor func(path string) error) string {
 	t.Helper()
 	dir := t.TempDir()
 	t.Setenv("KSWITCH_CONFIG_DIR", dir)
+	stubEditor(t, editor)
+	return dir
+}
+
+// stubEditor replaces the editor with fn for the test and keeps scratch
+// files in a temp dir.
+func stubEditor(t *testing.T, editor func(path string) error) {
+	t.Helper()
 	t.Setenv("TMPDIR", t.TempDir())
 	orig := openEditor
 	openEditor = editor
 	t.Cleanup(func() { openEditor = orig })
-	return dir
 }
 
 // paste returns a fake editor that replaces the scratch file's content.

@@ -136,6 +136,84 @@ func (s *Store) Remove(name string) error {
 	return s.save(st)
 }
 
+// UpdateKubeconfig replaces the stored kubeconfig file of name.
+func (s *Store) UpdateKubeconfig(name string, kubecfg []byte) error {
+	k, err := s.Get(name)
+	if err != nil {
+		return err
+	}
+	return os.WriteFile(k.Path, kubecfg, 0o600)
+}
+
+// Rename changes an entry's name. The kubeconfig file keeps its name, so
+// shells that already use it are unaffected.
+func (s *Store) Rename(name, newName string) error {
+	if err := ValidateName(newName); err != nil {
+		return err
+	}
+	st, err := s.load()
+	if err != nil {
+		return err
+	}
+	stored := findEntry(st, name)
+	if stored == "" {
+		return fmt.Errorf("kubeconfig %q %w", name, ErrNotFound)
+	}
+	if other := findEntry(st, newName); other != "" && other != stored {
+		return fmt.Errorf("kubeconfig %q already exists", other)
+	}
+	e := st.Entries[stored]
+	delete(st.Entries, stored)
+	st.Entries[newName] = e
+	return s.save(st)
+}
+
+// SetEnvironment changes an entry's environment.
+func (s *Store) SetEnvironment(name string, env Environment) error {
+	if err := validateEnvironment(env); err != nil {
+		return err
+	}
+	return s.update(name, func(e *Entry) { e.Environment = env })
+}
+
+// SetColor changes an entry's color.
+func (s *Store) SetColor(name, color string) error {
+	if err := validateColor(color); err != nil {
+		return err
+	}
+	return s.update(name, func(e *Entry) { e.Color = color })
+}
+
+// update applies change to the entry named name and saves the state.
+func (s *Store) update(name string, change func(*Entry)) error {
+	st, err := s.load()
+	if err != nil {
+		return err
+	}
+	stored := findEntry(st, name)
+	if stored == "" {
+		return fmt.Errorf("kubeconfig %q %w", name, ErrNotFound)
+	}
+	e := st.Entries[stored]
+	change(&e)
+	st.Entries[stored] = e
+	return s.save(st)
+}
+
+func validateEnvironment(env Environment) error {
+	if env != EnvProd && env != EnvDev {
+		return fmt.Errorf("invalid environment %q", env)
+	}
+	return nil
+}
+
+func validateColor(color string) error {
+	if color == "" {
+		return errors.New("color must not be empty")
+	}
+	return nil
+}
+
 // List returns all stored kubeconfigs, sorted by name (case-insensitively).
 func (s *Store) List() ([]Kubeconfig, error) {
 	st, err := s.load()
@@ -173,11 +251,11 @@ func (s *Store) Add(name string, env Environment, color string, kubecfg []byte) 
 	if err := ValidateName(name); err != nil {
 		return "", err
 	}
-	if env != EnvProd && env != EnvDev {
-		return "", fmt.Errorf("invalid environment %q", env)
+	if err := validateEnvironment(env); err != nil {
+		return "", err
 	}
-	if color == "" {
-		return "", errors.New("color must not be empty")
+	if err := validateColor(color); err != nil {
+		return "", err
 	}
 
 	st, err := s.load()

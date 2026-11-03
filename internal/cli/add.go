@@ -14,9 +14,9 @@ import (
 	"github.com/Yanni8/kswitch/internal/store"
 )
 
-// editorTemplate is pre-filled into the scratch file and stripped again
-// before the pasted kubeconfig is stored.
-const editorTemplate = `# Paste your kubeconfig below, then save and quit.
+// addTemplate heads the scratch file when adding a kubeconfig; it is
+// stripped again before the pasted kubeconfig is stored.
+const addTemplate = `# Paste your kubeconfig below, then save and quit.
 # Quit without saving (or leave the file empty) to abort.
 `
 
@@ -43,7 +43,7 @@ func runAdd(cmd *cobra.Command, _ []string) error {
 		return err
 	}
 
-	raw, scratch, err := editKubeconfig()
+	raw, scratch, err := editInEditor(addTemplate, nil)
 	if err != nil {
 		return err
 	}
@@ -69,11 +69,11 @@ func runAdd(cmd *cobra.Command, _ []string) error {
 	if err != nil {
 		return fail(err)
 	}
-	env, err := promptEnvironment(p)
+	env, err := promptEnvironment(p, "")
 	if err != nil {
 		return fail(err)
 	}
-	color, err := promptColor(p)
+	color, err := promptColor(p, "")
 	if err != nil {
 		return fail(err)
 	}
@@ -89,16 +89,20 @@ func runAdd(cmd *cobra.Command, _ []string) error {
 	return nil
 }
 
-// editKubeconfig opens the editor on a scratch file and returns what the
-// user pasted (template stripped) along with the scratch path. Content is
-// nil if the user pasted nothing. The caller owns the scratch file.
-func editKubeconfig() (content []byte, path string, err error) {
+// editInEditor opens the editor on a scratch file holding header (which
+// is stripped from the result) followed by initial, and returns the
+// edited text along with the scratch path. Content is nil if the file
+// was left empty apart from comments. The caller owns the scratch file.
+func editInEditor(header string, initial []byte) (content []byte, path string, err error) {
 	f, err := os.CreateTemp("", "kswitch-*.yaml")
 	if err != nil {
 		return nil, "", err
 	}
 	path = f.Name()
-	_, werr := f.WriteString(editorTemplate)
+	_, werr := f.WriteString(header)
+	if werr == nil && len(initial) > 0 {
+		_, werr = f.Write(initial)
+	}
 	cerr := f.Close()
 	if werr != nil || cerr != nil {
 		os.Remove(path)
@@ -116,7 +120,7 @@ func editKubeconfig() (content []byte, path string, err error) {
 		return nil, "", err
 	}
 
-	text := strings.TrimPrefix(string(raw), editorTemplate)
+	text := strings.TrimPrefix(string(raw), header)
 	if strings.TrimSpace(withoutComments(text)) == "" {
 		return nil, path, nil
 	}
@@ -142,37 +146,41 @@ func withoutComments(s string) string {
 func promptName(p *prompt.Prompter, def string, st *store.Store) (string, error) {
 	return p.Input("Name for this kubeconfig", prompt.InputOptions{
 		Placeholder: def,
-		Validate:    func(name string) (string, error) { return checkName(name, st) },
+		Validate:    func(name string) (string, error) { return checkName(name, st, "") },
 	})
 }
 
 // checkName explains why name cannot be used, or returns "" if it can.
-func checkName(name string, st *store.Store) (string, error) {
+// An existing entry named except does not count as a clash, so an entry
+// can keep (or re-case) its own name.
+func checkName(name string, st *store.Store, except string) (string, error) {
 	if name == "" {
 		return "A name is required.", nil
 	}
 	if err := store.ValidateName(name); err != nil {
 		return capitalize(err.Error()) + ".", nil
 	}
-	exists, err := st.Exists(name)
+	existing, err := st.Get(name)
+	if errors.Is(err, store.ErrNotFound) || (err == nil && existing.Name == except) {
+		return "", nil
+	}
 	if err != nil {
 		return "", err
 	}
-	if exists {
-		return fmt.Sprintf("A kubeconfig named %q already exists; choose another name.", name), nil
-	}
-	return "", nil
+	return fmt.Sprintf("A kubeconfig named %q already exists; choose another name.", existing.Name), nil
 }
 
-func promptEnvironment(p *prompt.Prompter) (store.Environment, error) {
-	choice, err := p.Select("Is this a prod or a dev environment?", []prompt.Option{
+// promptEnvironment asks for the environment, with the cursor on def.
+func promptEnvironment(p *prompt.Prompter, def store.Environment) (store.Environment, error) {
+	choice, err := p.SelectDefault("Is this a prod or a dev environment?", []prompt.Option{
 		{Value: string(store.EnvProd), Label: "prod"},
 		{Value: string(store.EnvDev), Label: "dev"},
-	})
+	}, string(def))
 	return store.Environment(choice), err
 }
 
-func promptColor(p *prompt.Prompter) (string, error) {
+// promptColor asks for the background color, with the cursor on def.
+func promptColor(p *prompt.Prompter, def string) (string, error) {
 	opts := make([]prompt.Option, len(palette.Colors))
 	for i, c := range palette.Colors {
 		opts[i] = prompt.Option{
@@ -180,7 +188,7 @@ func promptColor(p *prompt.Prompter) (string, error) {
 			Label: fmt.Sprintf("%-8s %s", c.Name, c.Swatch()),
 		}
 	}
-	return p.Select("Which terminal background color should it get?", opts)
+	return p.SelectDefault("Which terminal background color should it get?", opts, def)
 }
 
 func capitalize(s string) string {

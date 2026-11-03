@@ -6,14 +6,15 @@ import (
 	"io"
 )
 
-// selectMenu draws opts as a menu driven by the arrow keys (or j/k) and
-// returns the chosen Value. The terminal must be in raw mode.
-func selectMenu(in *bufio.Reader, out io.Writer, width int, title string, opts []Option) (string, error) {
+// selectMenu draws opts as a menu driven by the arrow keys (or j/k) with
+// the cursor starting on opts[initial], and returns the chosen Value.
+// The terminal must be in raw mode.
+func selectMenu(in *bufio.Reader, out io.Writer, width int, title string, opts []Option, initial int) (string, error) {
 	fmt.Fprint(out, hideCursor)
 	defer fmt.Fprint(out, showCursor)
 
 	scr := &screen{out: out, width: width}
-	cur := 0
+	cur := initial
 	draw := func() {
 		lines := make([]string, 0, len(opts)+2)
 		lines = append(lines, title)

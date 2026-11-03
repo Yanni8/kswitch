@@ -19,8 +19,41 @@ var testOpts = []Option{
 func runMenu(t *testing.T, keys string) (value, output string, err error) {
 	t.Helper()
 	var out bytes.Buffer
-	value, err = selectMenu(bufio.NewReader(strings.NewReader(keys)), &out, 80, "Pick:", testOpts)
+	value, err = selectMenu(bufio.NewReader(strings.NewReader(keys)), &out, 80, "Pick:", testOpts, 0)
 	return value, out.String(), err
+}
+
+func TestMenuStartsOnInitialOption(t *testing.T) {
+	var out bytes.Buffer
+	got, err := selectMenu(bufio.NewReader(strings.NewReader("\r")), &out, 80, "Pick:", testOpts, 1)
+	if err != nil || got != "test" {
+		t.Errorf("got %q, %v; want %q", got, err, "test")
+	}
+	if strings.Contains(out.String(), bold("> prod")) {
+		t.Error("the first option must not be highlighted when another is initial")
+	}
+}
+
+func TestSelectDefaultFallsBackWithDefault(t *testing.T) {
+	var out bytes.Buffer
+	p := New(strings.NewReader("\n"), &out)
+	if got, err := p.SelectDefault("Pick:", testOpts, "test"); err != nil || got != "test" {
+		t.Errorf("empty answer: got %q, %v; want the default", got, err)
+	}
+	if !strings.Contains(out.String(), "Select [1-3] (default: test): ") {
+		t.Errorf("default not shown:\n%s", out.String())
+	}
+
+	p = New(strings.NewReader("3\n"), io.Discard)
+	if got, err := p.SelectDefault("Pick:", testOpts, "test"); err != nil || got != "x" {
+		t.Errorf("explicit answer: got %q, %v; want %q", got, err, "x")
+	}
+
+	// An unknown default is ignored: an empty answer is not accepted.
+	p = New(strings.NewReader("\n"), io.Discard)
+	if _, err := p.SelectDefault("Pick:", testOpts, "nope"); !errors.Is(err, ErrAborted) {
+		t.Errorf("unknown default: got %v, want ErrAborted", err)
+	}
 }
 
 func TestMenuKeys(t *testing.T) {

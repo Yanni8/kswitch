@@ -43,7 +43,8 @@ func runRemove(cmd *cobra.Command, args []string, yes bool) error {
 			return err
 		}
 	} else {
-		if target, err = pickKubeconfig(p, st); err != nil {
+		target, err = pickKubeconfig(p, st, "Which kubeconfig should be removed?", prompt.IsTerminal(out))
+		if err != nil {
 			return err
 		}
 		if target.Name == "" {
@@ -71,30 +72,4 @@ func runRemove(cmd *cobra.Command, args []string, yes bool) error {
 	}
 	fmt.Fprintf(out, "Removed %q\n", target.Name)
 	return nil
-}
-
-// pickKubeconfig lets the user choose one of the stored kubeconfigs. It
-// returns a zero Kubeconfig when there are none.
-func pickKubeconfig(p *prompt.Prompter, st *store.Store) (store.Kubeconfig, error) {
-	configs, err := st.List()
-	if err != nil || len(configs) == 0 {
-		return store.Kubeconfig{}, err
-	}
-	opts := make([]prompt.Option, len(configs))
-	for i, c := range configs {
-		opts[i] = prompt.Option{
-			Value: c.Name,
-			Label: fmt.Sprintf("%s  (%s, %s)", c.Name, c.Environment, c.Color),
-		}
-	}
-	name, err := p.Select("Which kubeconfig should be removed?", opts)
-	if err != nil {
-		return store.Kubeconfig{}, err
-	}
-	for _, c := range configs {
-		if c.Name == name {
-			return c, nil
-		}
-	}
-	return store.Kubeconfig{}, fmt.Errorf("kubeconfig %q %w", name, store.ErrNotFound)
 }

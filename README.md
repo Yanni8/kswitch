@@ -38,6 +38,15 @@ Removes a kubeconfig and deletes its stored file (alias: `rm`). Without
 a name you pick one from a menu. It asks for confirmation unless you pass
 `-y`/`--yes`.
 
+### `kswitch use [name]`
+
+Switches to a kubeconfig (alias: `switch`). Without a name you pick one
+from a menu. kswitch starts a new shell (`$SHELL`) with `KUBECONFIG`
+pointing at the chosen config and the terminal background set to its
+color; type `exit` to return to the previous shell, which restores the
+background. Inside the shell `KSWITCH_NAME` and `KSWITCH_ENV` are set,
+handy for your prompt. The shell's exit status is passed through.
+
 ### `kswitch version`
 
 Prints version information.

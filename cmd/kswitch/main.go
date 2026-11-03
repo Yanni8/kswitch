@@ -8,8 +8,14 @@ import (
 )
 
 func main() {
-	if err := cli.Execute(); err != nil {
-		fmt.Fprintf(os.Stderr, "kswitch: %v\n", err)
-		os.Exit(1)
+	err := cli.Execute()
+	if err == nil {
+		return
 	}
+	// A shell started by "kswitch use" passes its exit status through.
+	if code, ok := cli.ExitStatus(err); ok {
+		os.Exit(code)
+	}
+	fmt.Fprintf(os.Stderr, "kswitch: %v\n", err)
+	os.Exit(1)
 }

@@ -112,7 +112,41 @@ func TestRunCLI(t *testing.T) {
 	}
 
 	t.Setenv("PATH", t.TempDir())
-	if _, err := runCLI("eks", "list-clusters"); err == nil || !strings.Contains(err.Error(), "not found in PATH") {
+	if _, err := runCLI("eks", "list-clusters"); !errors.Is(err, ErrNotInstalled) {
 		t.Errorf("missing CLI: got %v", err)
+	}
+}
+
+func TestProfiles(t *testing.T) {
+	calls := stubRun(t, func([]string) ([]byte, error) { return []byte("default\nwork\n\n  personal \n"), nil })
+	got, err := Profiles()
+	if err != nil || strings.Join(got, ",") != "default,work,personal" {
+		t.Errorf("Profiles = %v, %v", got, err)
+	}
+	if want := "configure list-profiles"; strings.Join((*calls)[0], " ") != want {
+		t.Errorf("aws args = %q, want %q", strings.Join((*calls)[0], " "), want)
+	}
+}
+
+func TestConfiguredRegion(t *testing.T) {
+	calls := stubRun(t, func([]string) ([]byte, error) { return []byte("eu-west-1\n"), nil })
+	if got, err := ConfiguredRegion("work"); err != nil || got != "eu-west-1" {
+		t.Errorf("configured: got %q, %v", got, err)
+	}
+	if want := "configure get region --profile work"; strings.Join((*calls)[0], " ") != want {
+		t.Errorf("aws args = %q, want %q", strings.Join((*calls)[0], " "), want)
+	}
+
+	calls = stubRun(t, func([]string) ([]byte, error) { return nil, errors.New("aws configure get: exit status 1") })
+	if got, err := ConfiguredRegion(""); err != nil || got != "" {
+		t.Errorf("unset: got %q, %v; want empty and no error", got, err)
+	}
+	if want := "configure get region"; strings.Join((*calls)[0], " ") != want {
+		t.Errorf("aws args = %q, want %q", strings.Join((*calls)[0], " "), want)
+	}
+
+	stubRun(t, func([]string) ([]byte, error) { return nil, ErrNotInstalled })
+	if _, err := ConfiguredRegion(""); !errors.Is(err, ErrNotInstalled) {
+		t.Errorf("missing CLI: got %v, want ErrNotInstalled", err)
 	}
 }

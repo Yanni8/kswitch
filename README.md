@@ -81,8 +81,11 @@ Kubeconfigs are stored with mode `0600` under `~/.config/kubeswitch/configs/`
 Imports the kubeconfig of an AWS EKS cluster instead of pasting one.
 Without a cluster name, the clusters in the region are listed to pick
 from. The kubeconfig is fetched with `aws eks update-kubeconfig`, so the
-AWS CLI must be installed and configured; `--region`, `--profile`, and
-`--role-arn` are passed through to it. You are then asked for the name
+AWS CLI must be installed; `--region`, `--profile`, and `--role-arn` are
+passed through to it. If no profile is configured (no `--profile`,
+`AWS_PROFILE`, or `default` profile), you pick one of your configured
+profiles from a menu, and if that profile has no region, you are asked
+for one. You are then asked for the name
 (defaulting to the cluster name), the environment, and the color, as
 with `add`. Authentication to the cluster goes through the AWS CLI
 (`aws eks get-token`); the profile, if given, is remembered in the

@@ -73,13 +73,49 @@ func Kubeconfig(cluster string, o Options) ([]byte, error) {
 	return os.ReadFile(path)
 }
 
+// Profiles returns the names of the configured AWS CLI profiles, in the
+// order the CLI lists them.
+func Profiles() ([]string, error) {
+	out, err := Run("configure", "list-profiles")
+	if err != nil {
+		return nil, err
+	}
+	var profiles []string
+	for _, line := range strings.Split(string(out), "\n") {
+		if p := strings.TrimSpace(line); p != "" {
+			profiles = append(profiles, p)
+		}
+	}
+	return profiles, nil
+}
+
+// ConfiguredRegion returns the region configured for profile ("" for the
+// default profile), or "" when none is configured.
+func ConfiguredRegion(profile string) (string, error) {
+	args := []string{"configure", "get", "region"}
+	if profile != "" {
+		args = append(args, "--profile", profile)
+	}
+	out, err := Run(args...)
+	if errors.Is(err, ErrNotInstalled) {
+		return "", err
+	}
+	if err != nil {
+		return "", nil // "aws configure get" fails when the value is not set
+	}
+	return strings.TrimSpace(string(out)), nil
+}
+
+// ErrNotInstalled is returned when the AWS CLI cannot be found.
+var ErrNotInstalled = errors.New("the AWS CLI (aws) was not found in PATH; install it from https://aws.amazon.com/cli/")
+
 // Run executes the AWS CLI with args and returns its standard output.
 // It is a variable so tests can substitute a fake.
 var Run = runCLI
 
 func runCLI(args ...string) ([]byte, error) {
 	if _, err := exec.LookPath("aws"); err != nil {
-		return nil, errors.New("the AWS CLI (aws) was not found in PATH; install it from https://aws.amazon.com/cli/")
+		return nil, ErrNotInstalled
 	}
 	cmd := exec.Command("aws", args...)
 	cmd.Stdin = os.Stdin // the CLI may prompt, for example for an MFA code

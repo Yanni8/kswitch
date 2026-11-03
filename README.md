@@ -3,6 +3,8 @@
 Fast switcher between kubeconfigs, with a terminal background color per
 config so prod is never mistaken for dev.
 
+![Switch kubeconfigs with confidence: a kubeswitch demo session](docs/kubeswitch-demo.gif)
+
 ## Installation
 
 On Linux and macOS (amd64 or arm64), one command installs the latest

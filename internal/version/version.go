@@ -12,8 +12,9 @@ var (
 	date    = ""
 )
 
-// String returns a human-readable version string.
-func String() string {
+// Version returns the bare version, such as "v1.2.3", or "dev" for a
+// build without one.
+func Version() string {
 	v := version
 	if v == "dev" {
 		// Fall back to module info so `go install ...@vX.Y.Z` builds
@@ -22,6 +23,12 @@ func String() string {
 			v = info.Main.Version
 		}
 	}
+	return v
+}
+
+// String returns a human-readable version string.
+func String() string {
+	v := Version()
 	if commit != "" {
 		v += " (" + commit + ")"
 	}

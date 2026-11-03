@@ -21,9 +21,8 @@ const editTemplate = `# Edit the kubeconfig below, then save and quit.
 
 func newEditCmd() *cobra.Command {
 	return &cobra.Command{
-		Use:     "edit [name]",
-		Aliases: []string{"update"},
-		Short:   "Change a kubeconfig's contents, name, environment, or color",
+		Use:   "edit [name]",
+		Short: "Change a kubeconfig's contents, name, environment, or color",
 		Long: `Edit a configured kubeconfig.
 
 Without a name, pick the kubeconfig from a menu. You then choose what

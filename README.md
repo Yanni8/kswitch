@@ -23,6 +23,9 @@ curl -fsSL https://raw.githubusercontent.com/Yanni8/kswitch/main/install.sh \
   | KSWITCH_INSTALL_DIR=~/.local/bin KSWITCH_VERSION=v1.2.3 sh
 ```
 
+Later, `kswitch update` brings the installed binary to the latest
+release in one go (see below).
+
 ### Manual download
 
 Every [release](https://github.com/Yanni8/kswitch/releases) ships
@@ -86,7 +89,7 @@ kubeconfig. `kswitch import` on its own lists the available providers.
 
 ### `kswitch edit [name]`
 
-Changes one thing about a kubeconfig (alias: `update`). Without a name
+Changes one thing about a kubeconfig. Without a name
 you pick one from a menu, then choose what to change: the kubeconfig
 contents (opened in your editor, pre-filled with the current file), the
 name, the environment, or the color. The current value is suggested or
@@ -118,6 +121,16 @@ The colors are deep shades (red is `#5a1515`, for example) so that a
 whole terminal in them stays comfortable and ANSI-colored output remains
 readable; white is the one light option. The swatches in the menus show
 sample text in the exact combination you will get.
+
+### `kswitch update [version]`
+
+Updates kswitch itself to the latest release, or to the given version
+(`kswitch update v1.2.3`, also for downgrades). It downloads the archive
+for this platform, verifies it against the release's `checksums.txt`,
+and replaces the running binary in place. `--check` only reports whether
+a newer release exists. If the binary's directory is not writable, run
+`sudo kswitch update`. Not supported on Windows yet. `KSWITCH_UPDATE_URL`
+points it at a mirror of the GitHub repository URL.
 
 ### `kswitch version`
 

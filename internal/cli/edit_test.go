@@ -74,7 +74,7 @@ func TestEditRename(t *testing.T) {
 	dir := seedStore(t)
 	file := filepath.Join(dir, "configs", "payments-prod.yaml")
 
-	out, err := execute(t, "2\nStaging\n", "update", "Payments Prod") // the alias
+	out, err := execute(t, "2\nStaging\n", "edit", "Payments Prod")
 	if err != nil {
 		t.Fatalf("edit failed: %v\n%s", err, out)
 	}

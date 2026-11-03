@@ -1,3 +1,6 @@
+// Copyright 2026 Yannick Müller
+// SPDX-License-Identifier: Apache-2.0
+
 // Package store persists the kubeconfigs added to kubeswitch together with
 // their metadata (environment and terminal background color).
 //

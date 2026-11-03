@@ -1,4 +1,6 @@
 #!/bin/sh
+# Copyright 2026 Yannick Müller
+# SPDX-License-Identifier: Apache-2.0
 # Installs kubeswitch on Linux or macOS with a single command:
 #
 #   curl -fsSL https://raw.githubusercontent.com/Yanni8/kubeswitch/main/install.sh | sh

@@ -1,3 +1,6 @@
+// Copyright 2026 Yannick Müller
+// SPDX-License-Identifier: Apache-2.0
+
 // Package terminal changes the controlling terminal's text and
 // background colors through the OSC 10 and OSC 11 escape sequences and
 // restores them afterwards.

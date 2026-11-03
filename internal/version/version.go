@@ -1,3 +1,6 @@
+// Copyright 2026 Yannick Müller
+// SPDX-License-Identifier: Apache-2.0
+
 // Package version holds build metadata injected at link time.
 package version
 

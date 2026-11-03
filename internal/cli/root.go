@@ -1,3 +1,6 @@
+// Copyright 2026 Yannick Müller
+// SPDX-License-Identifier: Apache-2.0
+
 // Package cli defines the kubeswitch command-line interface.
 package cli
 
@@ -22,7 +25,7 @@ func NewRootCmd() *cobra.Command {
 	}
 
 	cmd.AddCommand(
-		newAddCmd(), newEditCmd(), newImportCmd(), newListCmd(),
+		newAddCmd(), newEditCmd(), newImportCmd(), newLicenseCmd(), newListCmd(),
 		newRemoveCmd(), newUpdateCmd(), newUseCmd(), newVersionCmd(),
 	)
 

@@ -1,3 +1,6 @@
+// Copyright 2026 Yannick Müller
+// SPDX-License-Identifier: Apache-2.0
+
 // Package kubeconfig provides minimal parsing of kubeconfig files —
 // just enough to validate pasted input and derive a display name.
 package kubeconfig

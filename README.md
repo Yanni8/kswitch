@@ -151,6 +151,13 @@ points it at a mirror of the GitHub repository URL.
 
 Prints version information.
 
+## License
+
+kubeswitch is licensed under the [Apache License 2.0](LICENSE); the
+copyright notice is in [NOTICE](NOTICE). `kubeswitch license` shows the
+license together with those of the libraries it is built with, which are
+collected under `internal/licenses/third_party` by `make licenses`.
+
 ## Releasing
 
 Pushing a version tag publishes a release:

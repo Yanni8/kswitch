@@ -1,3 +1,6 @@
+// Copyright 2026 Yannick Müller
+// SPDX-License-Identifier: Apache-2.0
+
 // Package eks fetches kubeconfigs of AWS EKS clusters through the AWS
 // CLI, which kubectl needs for authenticating to them anyway.
 package eks

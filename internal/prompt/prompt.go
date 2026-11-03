@@ -1,3 +1,6 @@
+// Copyright 2026 Yannick Müller
+// SPDX-License-Identifier: Apache-2.0
+
 // Package prompt implements the questions kubeswitch asks interactively:
 // arrow-key menus and an inline text field when attached to a terminal,
 // plain line-based prompts otherwise (piped input, tests).

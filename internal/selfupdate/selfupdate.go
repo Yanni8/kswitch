@@ -1,3 +1,6 @@
+// Copyright 2026 Yannick Müller
+// SPDX-License-Identifier: Apache-2.0
+
 // Package selfupdate fetches kubeswitch releases from GitHub and swaps the
 // installed binary for a new one.
 package selfupdate

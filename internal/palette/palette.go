@@ -1,3 +1,6 @@
+// Copyright 2026 Yannick Müller
+// SPDX-License-Identifier: Apache-2.0
+
 // Package palette defines the background colors a kubeconfig can be
 // given and the text color that reads well on each of them.
 package palette

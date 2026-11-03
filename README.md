@@ -91,6 +91,17 @@ with `add`. Authentication to the cluster goes through the AWS CLI
 (`aws eks get-token`); the profile, if given, is remembered in the
 kubeconfig. `kubeswitch import` on its own lists the available providers.
 
+### `kubeswitch import kubeconfig [file...]`
+
+Imports the contexts of your existing kubeconfig: the files kubectl uses
+(`$KUBECONFIG`, or `~/.kube/config`) unless files are given. Each
+context is shown in turn with a Keep/Skip menu. A kept one becomes a
+kubeconfig of its own, holding just that context with its cluster and
+user, and you are asked for the name (defaulting to the context name),
+the environment, and the color as with `add`. Files are merged the way
+kubectl merges them, and relative certificate paths are made absolute so
+the copies work from anywhere. Your original kubeconfig is not changed.
+
 ### `kubeswitch edit [name]`
 
 Changes one thing about a kubeconfig. Without a name

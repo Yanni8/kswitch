@@ -26,7 +26,7 @@ Each provider is a subcommand; see "kubeswitch import <provider> --help".`,
 			return cmd.Help()
 		},
 	}
-	cmd.AddCommand(newImportAWSCmd())
+	cmd.AddCommand(newImportAWSCmd(), newImportKubeconfigCmd())
 	return cmd
 }
 

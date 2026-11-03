@@ -297,7 +297,9 @@ func TestImportShowsProviders(t *testing.T) {
 	if err != nil {
 		t.Fatalf("import failed: %v", err)
 	}
-	if !strings.Contains(out, "Usage:") || !strings.Contains(out, "aws") {
-		t.Errorf("expected help listing the aws provider:\n%s", out)
+	for _, provider := range []string{"aws", "kubeconfig"} {
+		if !strings.Contains(out, "Usage:") || !strings.Contains(out, provider) {
+			t.Errorf("expected help listing the %s provider:\n%s", provider, out)
+		}
 	}
 }

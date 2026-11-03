@@ -10,7 +10,6 @@ import (
 	"os"
 	"time"
 
-	"golang.org/x/sys/unix"
 	"golang.org/x/term"
 )
 
@@ -93,20 +92,16 @@ func query(tty *os.File, code int) (string, error) {
 		if remaining <= 0 {
 			return "", errNoReply
 		}
-		fds := []unix.PollFd{{Fd: int32(fd), Events: unix.POLLIN}}
-		n, err := unix.Poll(fds, int(remaining.Milliseconds())+1)
-		if errors.Is(err, unix.EINTR) {
-			continue
-		}
+		ready, err := waitReadable(fd, remaining)
 		if err != nil {
 			return "", err
 		}
-		if n == 0 {
+		if !ready {
 			return "", errNoReply
 		}
 
 		chunk := make([]byte, 128)
-		m, err := unix.Read(fd, chunk)
+		m, err := tty.Read(chunk)
 		if err != nil {
 			return "", err
 		}

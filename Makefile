@@ -8,7 +8,10 @@ LDFLAGS := -X $(MODULE)/internal/version.version=$(VERSION) \
            -X $(MODULE)/internal/version.commit=$(COMMIT) \
            -X $(MODULE)/internal/version.date=$(DATE)
 
-.PHONY: all build run test fmt vet tidy install clean
+# GOOS/GOARCH pairs the release archives are built for.
+PLATFORMS := linux/amd64 linux/arm64 darwin/amd64 darwin/arm64 windows/amd64 windows/arm64
+
+.PHONY: all build run test fmt vet tidy install dist clean
 
 all: build
 
@@ -40,6 +43,28 @@ tidy:
 install:
 	go install -ldflags '$(LDFLAGS)' ./cmd/$(BINARY)
 
+## dist: cross-compile release archives for all platforms into ./dist
+dist:
+	rm -rf dist && mkdir -p dist
+	@for platform in $(PLATFORMS); do \
+		os=$${platform%/*}; arch=$${platform#*/}; \
+		name=$(BINARY)_$${os}_$${arch}; \
+		bin=$(BINARY); [ "$$os" = windows ] && bin=$(BINARY).exe; \
+		echo "building $$name"; \
+		mkdir -p dist/$$name; \
+		GOOS=$$os GOARCH=$$arch CGO_ENABLED=0 go build -trimpath -ldflags '$(LDFLAGS)' \
+			-o dist/$$name/$$bin ./cmd/$(BINARY) || exit 1; \
+		cp README.md dist/$$name/; \
+		if [ "$$os" = windows ]; then \
+			(cd dist/$$name && zip -q ../$$name.zip $$bin README.md); \
+		else \
+			tar -czf dist/$$name.tar.gz -C dist/$$name $$bin README.md; \
+		fi; \
+		rm -r dist/$$name; \
+	done
+	cd dist && sha256sum *.tar.gz *.zip > checksums.txt
+	@ls -1 dist
+
 ## clean: remove build artifacts
 clean:
-	rm -rf bin
+	rm -rf bin dist

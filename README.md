@@ -3,6 +3,30 @@
 Fast switcher between kubeconfigs, with a terminal background color per
 config so prod is never mistaken for dev.
 
+## Installation
+
+Every [release](https://github.com/Yanni8/kswitch/releases) ships
+archives for Linux, macOS, and Windows on amd64 and arm64, named
+`kswitch_<os>_<arch>.tar.gz` (`.zip` on Windows), plus `checksums.txt`.
+The names never change, so the latest release is always at
+`https://github.com/Yanni8/kswitch/releases/latest/download/<archive>`.
+
+```sh
+curl -LO https://github.com/Yanni8/kswitch/releases/latest/download/kswitch_linux_amd64.tar.gz
+tar -xzf kswitch_linux_amd64.tar.gz kswitch
+sudo install kswitch /usr/local/bin/
+```
+
+To verify a download, compare it against `checksums.txt` from the same
+release (`sha256sum -c --ignore-missing checksums.txt`) or check its
+signed build provenance with the GitHub CLI:
+
+```sh
+gh attestation verify kswitch_linux_amd64.tar.gz --owner Yanni8
+```
+
+Or build from source with `make install` (needs Go).
+
 ## Commands
 
 ### `kswitch add`
@@ -78,3 +102,29 @@ sample text in the exact combination you will get.
 ### `kswitch version`
 
 Prints version information.
+
+## Releasing
+
+Pushing a version tag publishes a release:
+
+```sh
+git tag v1.2.3
+git push origin v1.2.3
+```
+
+The [release workflow](.github/workflows/release.yml) runs the tests,
+cross-compiles the archives with `make dist`, signs build provenance
+attestations for them, and publishes the GitHub release with generated
+notes. Tags containing a `-` (such as `v1.3.0-rc1`) become pre-releases.
+
+Releases are meant to be immutable. In the repository settings, scroll
+to the **Releases** section and select **Enable release immutability**
+(an organization can also enforce it for all or selected repositories
+under Settings → Repository → General → Releases). It applies to
+releases published after that: GitHub locks each one — assets can no
+longer be added, replaced, or removed, the tag can no longer be moved or
+deleted — and records a release attestation listing the tag, commit, and
+assets. Only the title, notes, and the pre-release/latest flags stay
+editable. The workflow is built for this: it creates the release as a
+draft, attaches all assets, and publishes only once every upload has
+succeeded, since assets cannot be attached after publishing.

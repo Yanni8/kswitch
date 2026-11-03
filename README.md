@@ -5,6 +5,26 @@ config so prod is never mistaken for dev.
 
 ## Installation
 
+On Linux and macOS (amd64 or arm64), one command installs the latest
+release:
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/Yanni8/kswitch/main/install.sh | sh
+```
+
+The [script](install.sh) picks the archive for your machine, verifies it
+against the release's `checksums.txt`, and installs the binary to
+`/usr/local/bin`, asking for `sudo` only if that directory is not
+writable. Set `KSWITCH_INSTALL_DIR` to install somewhere else (for
+example `~/.local/bin`) and `KSWITCH_VERSION` to pin a release:
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/Yanni8/kswitch/main/install.sh \
+  | KSWITCH_INSTALL_DIR=~/.local/bin KSWITCH_VERSION=v1.2.3 sh
+```
+
+### Manual download
+
 Every [release](https://github.com/Yanni8/kswitch/releases) ships
 archives for Linux, macOS, and Windows on amd64 and arm64, named
 `kswitch_<os>_<arch>.tar.gz` (`.zip` on Windows), plus `checksums.txt`.

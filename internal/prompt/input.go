@@ -77,7 +77,7 @@ func inputField(in *bufio.Reader, out io.Writer, width int, title string, o Inpu
 				return answer, nil
 			}
 			problem = p
-		case keyAbort:
+		case keyAbort, keyEscape:
 			scr.clear()
 			return "", ErrAborted
 		}

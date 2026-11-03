@@ -22,7 +22,8 @@ const (
 	keyDown
 	keyLeft
 	keyRight
-	keyAbort // Ctrl-C, Ctrl-D, Esc
+	keyEscape // a lone Esc
+	keyAbort  // Ctrl-C, Ctrl-D
 )
 
 type keyEvent struct {
@@ -64,7 +65,7 @@ func readKey(in *bufio.Reader) (keyEvent, error) {
 // nothing buffered behind it.
 func readEscape(in *bufio.Reader) (keyEvent, error) {
 	if in.Buffered() == 0 {
-		return keyEvent{kind: keyAbort}, nil
+		return keyEvent{kind: keyEscape}, nil
 	}
 	lead, err := in.ReadByte()
 	if err != nil {

@@ -26,6 +26,27 @@ func runMenu(t *testing.T, keys string) (value, output string, err error) {
 	return value, out.String(), err
 }
 
+// chunkReader hands out one chunk per Read, like keystrokes typed one
+// after the other, so a lone Esc is seen as such.
+type chunkReader struct{ chunks []string }
+
+func (c *chunkReader) Read(p []byte) (int, error) {
+	if len(c.chunks) == 0 {
+		return 0, io.EOF
+	}
+	n := copy(p, c.chunks[0])
+	c.chunks = c.chunks[1:]
+	return n, nil
+}
+
+// runMenuKeys drives the menu with keystrokes delivered one at a time.
+func runMenuKeys(t *testing.T, keys ...string) (value, output string, err error) {
+	t.Helper()
+	var out bytes.Buffer
+	value, err = selectMenu(bufio.NewReader(&chunkReader{chunks: keys}), &out, 80, "Pick:", testOpts, 0)
+	return value, out.String(), err
+}
+
 func TestMenuStartsOnInitialOption(t *testing.T) {
 	var out bytes.Buffer
 	got, err := selectMenu(bufio.NewReader(strings.NewReader("\r")), &out, 80, "Pick:", testOpts, 1)
@@ -65,10 +86,15 @@ func TestMenuKeys(t *testing.T) {
 		{"down arrow", "\x1b[B\r", "test"},
 		{"up arrow", "\x1b[B\x1b[B\x1b[A\r", "test"},
 		{"application-mode arrows", "\x1bOB\x1bOB\x1bOA\r", "test"},
-		{"vim keys", "jjk\r", "test"},
-		{"newline confirms too", "j\n", "test"},
-		{"clamps at both ends", "kk\x1b[B\x1b[B\x1b[B\x1b[B\r", "x"},
-		{"unknown keys are ignored", "zz\x1b[C\x1b[3~\x1b[B\r", "test"},
+		{"newline confirms too", "\x1b[B\n", "test"},
+		{"clamps at both ends", "\x1b[A\x1b[A\x1b[B\x1b[B\x1b[B\x1b[B\r", "x"},
+		{"unknown keys are ignored", "\x1b[C\x1b[3~\x1b[B\r", "test"},
+		{"typing searches", "te\r", "test"},
+		{"search ignores case and looks at values too", "X\r", "x"},
+		{"every word has to match", "marks spot\r", "x"},
+		{"backspace widens the search again", "tez\x7f\r", "test"},
+		{"ctrl-u clears the search", "zzz\x15\x1b[B\r", "test"},
+		{"enter does nothing without matches", "zzz\r\x7f\x7f\x7f\x1b[B\r", "test"},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -80,6 +106,45 @@ func TestMenuKeys(t *testing.T) {
 				t.Errorf("got %q, want %q", got, tt.want)
 			}
 		})
+	}
+}
+
+func TestMenuSearch(t *testing.T) {
+	// Esc clears the search first and only aborts when there is none.
+	got, out, err := runMenuKeys(t, "z", "z", "\x1b", "\r")
+	if err != nil || got != "prod" {
+		t.Errorf("esc should clear the search: got %q, %v", got, err)
+	}
+	for _, want := range []string{dim("search: ") + "zz", dim("  (no matches)"), "Pick: prod\r\n"} {
+		if !strings.Contains(out, want) {
+			t.Errorf("output lacks %q:\n%q", want, out)
+		}
+	}
+	if _, _, err := runMenuKeys(t, "z", "\x1b", "\x1b"); !errors.Is(err, ErrAborted) {
+		t.Errorf("a second esc should abort, got %v", err)
+	}
+
+	// The highlighted option stays highlighted while it matches.
+	var buf bytes.Buffer
+	got, err = selectMenu(bufio.NewReader(strings.NewReader("t\r")), &buf, 80, "Pick:", testOpts, 1)
+	if err != nil || got != "test" {
+		t.Errorf("cursor should stay on test while searching: got %q, %v", got, err)
+	}
+}
+
+func TestFilterOptions(t *testing.T) {
+	colored := []Option{
+		{Value: "red", Label: "red      \x1b[48;2;90;21;21m Aa \x1b[0m"},
+		{Value: "blue", Label: "blue     \x1b[48;2;26;47;92m Aa \x1b[0m"},
+	}
+	if got := filterOptions(colored, "48"); len(got) != 0 {
+		t.Errorf("escape sequences must not be searchable, got %v", got)
+	}
+	if got := filterOptions(colored, "BLU"); len(got) != 1 || got[0].Value != "blue" {
+		t.Errorf("case-insensitive match: got %v", got)
+	}
+	if got := filterOptions(colored, "  "); len(got) != 2 {
+		t.Errorf("a blank query matches everything, got %v", got)
 	}
 }
 
@@ -102,7 +167,6 @@ func TestMenuAborts(t *testing.T) {
 	for name, keys := range map[string]string{
 		"ctrl-c":   "\x03",
 		"ctrl-d":   "\x04",
-		"q":        "q",
 		"lone esc": "\x1b",
 		"eof":      "jj",
 	} {

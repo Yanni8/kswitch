@@ -83,9 +83,13 @@ You are then asked for:
 
 The name is a text field that shows the suggestion as a placeholder:
 Enter accepts it, typing replaces it, and Tab (or `→`) copies it into
-the field for editing. The other two are menus: move with `↑`/`↓` (or
-`j`/`k`) and confirm with Enter. Esc or Ctrl-C aborts any prompt. When
-stdin is not a terminal, the prompts turn into plain line-based ones
+the field for editing. The other two are menus: move with `↑`/`↓`, type
+to search (the menu narrows down to the entries containing every typed
+word, ignoring case; Esc clears the search), and confirm with Enter.
+Esc on an empty search or Ctrl-C aborts any prompt. Every menu in
+kubeswitch works this way, so `kubeswitch use` followed by `pay` finds
+`Payments Prod` among any number of kubeconfigs. When stdin is not a
+terminal, the prompts turn into plain line-based ones
 (`Name [suggestion]:` and numbered lists).
 
 Kubeconfigs are stored with mode `0600` under `~/.config/kubeswitch/configs/`

@@ -116,7 +116,7 @@ func addKubeconfig(p *prompt.Prompter, out io.Writer, st *store.Store, raw []byt
 	if err != nil {
 		return err
 	}
-	color, err := promptColor(p, "")
+	color, err := promptColor(p, palette.None)
 	if err != nil {
 		return err
 	}
@@ -221,14 +221,19 @@ func promptEnvironment(p *prompt.Prompter, def store.Environment) (store.Environ
 }
 
 // promptColor asks for the background color, with the cursor on def.
+// Besides the palette, "none" leaves the terminal's colors alone.
 func promptColor(p *prompt.Prompter, def string) (string, error) {
-	opts := make([]prompt.Option, len(palette.Colors))
-	for i, c := range palette.Colors {
-		opts[i] = prompt.Option{
+	opts := make([]prompt.Option, 0, len(palette.Colors)+1)
+	for _, c := range palette.Colors {
+		opts = append(opts, prompt.Option{
 			Value: c.Name,
 			Label: fmt.Sprintf("%-8s %s", c.Name, c.Swatch()),
-		}
+		})
 	}
+	opts = append(opts, prompt.Option{
+		Value: palette.None,
+		Label: fmt.Sprintf("%-8s (keep the terminal's colors)", palette.None),
+	})
 	return p.SelectDefault("Which terminal background color should it get?", opts, def)
 }
 

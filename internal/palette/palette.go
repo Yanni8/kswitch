@@ -34,6 +34,10 @@ var Colors = []Color{
 	{"white", "#e6e6e6", 47},
 }
 
+// None is the choice of leaving the terminal's colors as they are. It is
+// stored like a color name but is not part of the palette.
+const None = "none"
+
 const (
 	lightText = "#f0f0f0"
 	darkText  = "#1a1a1a"

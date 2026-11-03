@@ -78,7 +78,8 @@ You are then asked for:
 - a human-readable name (defaults to the kubeconfig's current context),
 - whether it is a `prod` or a `dev` environment,
 - a terminal background color (black, red, green, yellow, blue, magenta,
-  cyan, white).
+  cyan, white), or `none` — the default — to leave the terminal's colors
+  as they are.
 
 The name is a text field that shows the suggestion as a placeholder:
 Enter accepts it, typing replaces it, and Tab (or `→`) copies it into

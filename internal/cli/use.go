@@ -167,6 +167,9 @@ func runShell(cmd *cobra.Command, k store.Kubeconfig, banner session.Banner) err
 // returned function restores the previous colors and may be called more
 // than once.
 func applyColors(out io.Writer, color string) func() {
+	if color == palette.None {
+		return func() {}
+	}
 	c, ok := palette.Find(color)
 	if !ok || !prompt.IsTerminal(out) {
 		return func() {}

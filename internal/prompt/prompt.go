@@ -46,13 +46,14 @@ type Prompter struct {
 // Prompts are interactive only when both are terminals.
 func New(in io.Reader, out io.Writer) *Prompter {
 	p := &Prompter{in: bufio.NewReader(in), out: out}
-	if isTerminal(in) && isTerminal(out) && os.Getenv("TERM") != "dumb" {
+	if IsTerminal(in) && IsTerminal(out) && os.Getenv("TERM") != "dumb" {
 		p.tty = in.(*os.File)
 	}
 	return p
 }
 
-func isTerminal(v any) bool {
+// IsTerminal reports whether v is an *os.File attached to a terminal.
+func IsTerminal(v any) bool {
 	f, ok := v.(*os.File)
 	return ok && term.IsTerminal(int(f.Fd()))
 }

@@ -24,3 +24,14 @@ var backgroundColors = []backgroundColor{
 func (c backgroundColor) swatch() string {
 	return fmt.Sprintf("\x1b[%dm      \x1b[0m", c.ansi)
 }
+
+// colorSwatch renders a block in the named color, or "" if the name is
+// not in the palette.
+func colorSwatch(name string) string {
+	for _, c := range backgroundColors {
+		if c.Name == name {
+			return c.swatch()
+		}
+	}
+	return ""
+}

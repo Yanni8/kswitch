@@ -27,6 +27,11 @@ Kubeconfigs are stored with mode `0600` under `~/.config/kswitch/configs/`
 (override the directory with `KSWITCH_CONFIG_DIR`), and the metadata in
 `~/.config/kswitch/state.json`.
 
+### `kswitch list`
+
+Lists the configured kubeconfigs with their environment and color
+(alias: `ls`). Color swatches are shown only when printing to a terminal.
+
 ### `kswitch version`
 
 Prints version information.

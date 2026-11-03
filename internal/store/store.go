@@ -14,6 +14,7 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"sort"
 	"strings"
 	"unicode"
 	"unicode/utf8"
@@ -77,6 +78,39 @@ func ValidateName(name string) error {
 		}
 	}
 	return nil
+}
+
+// Kubeconfig is a stored kubeconfig together with its metadata.
+type Kubeconfig struct {
+	Name        string
+	Environment Environment
+	Color       string
+	Path        string // where the kubeconfig file is stored
+}
+
+// List returns all stored kubeconfigs, sorted by name (case-insensitively).
+func (s *Store) List() ([]Kubeconfig, error) {
+	st, err := s.load()
+	if err != nil {
+		return nil, err
+	}
+	list := make([]Kubeconfig, 0, len(st.Entries))
+	for name, e := range st.Entries {
+		list = append(list, Kubeconfig{
+			Name:        name,
+			Environment: e.Environment,
+			Color:       e.Color,
+			Path:        filepath.Join(s.configsDir(), e.File),
+		})
+	}
+	sort.Slice(list, func(i, j int) bool {
+		a, b := strings.ToLower(list[i].Name), strings.ToLower(list[j].Name)
+		if a != b {
+			return a < b
+		}
+		return list[i].Name < list[j].Name
+	})
+	return list, nil
 }
 
 // Exists reports whether an entry with this name (compared

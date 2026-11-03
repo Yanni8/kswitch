@@ -68,6 +68,34 @@ func TestAddAndExists(t *testing.T) {
 	}
 }
 
+func TestListSortsByName(t *testing.T) {
+	s, dir := openTemp(t)
+	if list, err := s.List(); err != nil || len(list) != 0 {
+		t.Fatalf("empty store: got %v, %v", list, err)
+	}
+
+	for _, name := range []string{"beta", "Alpha", "gamma"} {
+		if _, err := s.Add(name, EnvDev, "blue", []byte("a: 1\n")); err != nil {
+			t.Fatal(err)
+		}
+	}
+	list, err := s.List()
+	if err != nil {
+		t.Fatalf("List: %v", err)
+	}
+	var names []string
+	for _, k := range list {
+		names = append(names, k.Name)
+	}
+	if got, want := strings.Join(names, ","), "Alpha,beta,gamma"; got != want {
+		t.Errorf("names = %q, want %q", got, want)
+	}
+	want := Kubeconfig{Name: "Alpha", Environment: EnvDev, Color: "blue", Path: filepath.Join(dir, "configs", "alpha.yaml")}
+	if list[0] != want {
+		t.Errorf("first entry = %+v, want %+v", list[0], want)
+	}
+}
+
 func TestAddRejectsDuplicateName(t *testing.T) {
 	s, _ := openTemp(t)
 	if _, err := s.Add("Prod EU", EnvProd, "red", []byte("a: 1\n")); err != nil {

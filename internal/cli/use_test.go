@@ -38,8 +38,8 @@ func TestUseByNameStartsShellWithKubeconfig(t *testing.T) {
 			t.Errorf("output lacks %q:\n%s", want, out)
 		}
 	}
-	if strings.Contains(out, "\x1b]11") {
-		t.Error("the background must not be changed when stdout is not a terminal")
+	if strings.Contains(out, "\x1b]1") {
+		t.Error("terminal colors must not be changed when stdout is not a terminal")
 	}
 	if strings.Contains(out, "nested") {
 		t.Errorf("unexpected nesting note:\n%s", out)

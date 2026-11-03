@@ -12,6 +12,7 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/Yanni8/kswitch/internal/palette"
 	"github.com/Yanni8/kswitch/internal/prompt"
 	"github.com/Yanni8/kswitch/internal/store"
 	"github.com/Yanni8/kswitch/internal/terminal"
@@ -64,7 +65,7 @@ func runUse(cmd *cobra.Command, args []string) error {
 		fmt.Fprintf(out, "Note: this shell is nested inside the one for %q.\n", outer)
 	}
 
-	restore := applyBackground(out, target.Color)
+	restore := applyColors(out, target.Color)
 	defer restore()
 
 	fmt.Fprintf(out, "Switched to %q (%s). Type exit to go back.\n", target.Name, target.Environment)
@@ -111,20 +112,21 @@ func runShell(cmd *cobra.Command, k store.Kubeconfig) error {
 	return nil
 }
 
-// applyBackground sets the terminal background to the named palette
-// color when out is a terminal. The returned function restores the
-// previous background and may be called more than once.
-func applyBackground(out io.Writer, color string) func() {
-	c, ok := findColor(color)
+// applyColors sets the terminal background to the named palette color,
+// with a text color that reads well on it, when out is a terminal. The
+// returned function restores the previous colors and may be called more
+// than once.
+func applyColors(out io.Writer, color string) func() {
+	c, ok := palette.Find(color)
 	if !ok || !prompt.IsTerminal(out) {
 		return func() {}
 	}
-	bg, err := terminal.Set(c.hex)
+	colors, err := terminal.SetColors(c.Text(), c.Hex)
 	if err != nil {
 		return func() {}
 	}
 	var once sync.Once
-	return func() { once.Do(bg.Restore) }
+	return func() { once.Do(colors.Restore) }
 }
 
 // exitError carries the exit status of the shell started by "use".

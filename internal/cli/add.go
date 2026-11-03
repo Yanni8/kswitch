@@ -9,6 +9,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/Yanni8/kswitch/internal/kubeconfig"
+	"github.com/Yanni8/kswitch/internal/palette"
 	"github.com/Yanni8/kswitch/internal/prompt"
 	"github.com/Yanni8/kswitch/internal/store"
 )
@@ -172,11 +173,11 @@ func promptEnvironment(p *prompt.Prompter) (store.Environment, error) {
 }
 
 func promptColor(p *prompt.Prompter) (string, error) {
-	opts := make([]prompt.Option, len(backgroundColors))
-	for i, c := range backgroundColors {
+	opts := make([]prompt.Option, len(palette.Colors))
+	for i, c := range palette.Colors {
 		opts[i] = prompt.Option{
 			Value: c.Name,
-			Label: fmt.Sprintf("%-8s %s", c.Name, c.swatch()),
+			Label: fmt.Sprintf("%-8s %s", c.Name, c.Swatch()),
 		}
 	}
 	return p.Select("Which terminal background color should it get?", opts)

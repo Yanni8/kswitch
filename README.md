@@ -43,9 +43,15 @@ a name you pick one from a menu. It asks for confirmation unless you pass
 Switches to a kubeconfig (alias: `switch`). Without a name you pick one
 from a menu. kswitch starts a new shell (`$SHELL`) with `KUBECONFIG`
 pointing at the chosen config and the terminal background set to its
-color; type `exit` to return to the previous shell, which restores the
-background. Inside the shell `KSWITCH_NAME` and `KSWITCH_ENV` are set,
-handy for your prompt. The shell's exit status is passed through.
+color; the text color is set to light or dark, whichever reads better on
+it. Type `exit` to return to the previous shell, which restores both
+colors. Inside the shell `KSWITCH_NAME` and `KSWITCH_ENV` are set, handy
+for your prompt. The shell's exit status is passed through.
+
+The colors are deep shades (red is `#5a1515`, for example) so that a
+whole terminal in them stays comfortable and ANSI-colored output remains
+readable; white is the one light option. The swatches in the menus show
+sample text in the exact combination you will get.
 
 ### `kswitch version`
 

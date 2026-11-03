@@ -1,7 +1,6 @@
 package cli
 
 import (
-	"bytes"
 	"strings"
 	"testing"
 
@@ -11,13 +10,7 @@ import (
 // execList runs "kswitch list" (or the given alias) and returns its output.
 func execList(t *testing.T, name string) (string, error) {
 	t.Helper()
-	cmd := NewRootCmd()
-	var out bytes.Buffer
-	cmd.SetOut(&out)
-	cmd.SetErr(&out)
-	cmd.SetArgs([]string{name})
-	err := cmd.Execute()
-	return out.String(), err
+	return execute(t, "", name)
 }
 
 func TestListEmptyStore(t *testing.T) {

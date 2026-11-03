@@ -32,6 +32,12 @@ Kubeconfigs are stored with mode `0600` under `~/.config/kswitch/configs/`
 Lists the configured kubeconfigs with their environment and color
 (alias: `ls`). Color swatches are shown only when printing to a terminal.
 
+### `kswitch remove [name]`
+
+Removes a kubeconfig and deletes its stored file (alias: `rm`). Without
+a name you pick one from a menu. It asks for confirmation unless you pass
+`-y`/`--yes`.
+
 ### `kswitch version`
 
 Prints version information.

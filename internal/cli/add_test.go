@@ -1,7 +1,6 @@
 package cli
 
 import (
-	"bytes"
 	"encoding/json"
 	"errors"
 	"os"
@@ -64,14 +63,7 @@ func pasteBelowTemplate(content string) func(string) error {
 // execAdd runs "kswitch add" with stdin answering the prompts.
 func execAdd(t *testing.T, stdin string) (string, error) {
 	t.Helper()
-	cmd := NewRootCmd()
-	var out bytes.Buffer
-	cmd.SetOut(&out)
-	cmd.SetErr(&out)
-	cmd.SetIn(strings.NewReader(stdin))
-	cmd.SetArgs([]string{"add"})
-	err := cmd.Execute()
-	return out.String(), err
+	return execute(t, stdin, "add")
 }
 
 func readState(t *testing.T, dir string) map[string]map[string]string {

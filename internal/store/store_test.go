@@ -1,6 +1,7 @@
 package store
 
 import (
+	"errors"
 	"os"
 	"path/filepath"
 	"strings"
@@ -93,6 +94,38 @@ func TestListSortsByName(t *testing.T) {
 	want := Kubeconfig{Name: "Alpha", Environment: EnvDev, Color: "blue", Path: filepath.Join(dir, "configs", "alpha.yaml")}
 	if list[0] != want {
 		t.Errorf("first entry = %+v, want %+v", list[0], want)
+	}
+}
+
+func TestGetAndRemove(t *testing.T) {
+	s, _ := openTemp(t)
+	path, err := s.Add("Prod EU", EnvProd, "red", []byte("a: 1\n"))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	k, err := s.Get("prod eu")
+	if err != nil {
+		t.Fatalf("Get: %v", err)
+	}
+	if want := (Kubeconfig{Name: "Prod EU", Environment: EnvProd, Color: "red", Path: path}); k != want {
+		t.Errorf("Get = %+v, want %+v", k, want)
+	}
+	if _, err := s.Get("nope"); !errors.Is(err, ErrNotFound) {
+		t.Errorf("Get(nope) = %v, want ErrNotFound", err)
+	}
+
+	if err := s.Remove("PROD EU"); err != nil {
+		t.Fatalf("Remove: %v", err)
+	}
+	if _, err := os.Stat(path); !os.IsNotExist(err) {
+		t.Errorf("kubeconfig file should be deleted (stat: %v)", err)
+	}
+	if list, _ := s.List(); len(list) != 0 {
+		t.Errorf("entry still listed: %+v", list)
+	}
+	if err := s.Remove("Prod EU"); !errors.Is(err, ErrNotFound) {
+		t.Errorf("second Remove = %v, want ErrNotFound", err)
 	}
 }
 

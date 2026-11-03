@@ -80,12 +80,60 @@ func ValidateName(name string) error {
 	return nil
 }
 
+// ErrNotFound is returned when no kubeconfig has the requested name.
+var ErrNotFound = errors.New("not found")
+
 // Kubeconfig is a stored kubeconfig together with its metadata.
 type Kubeconfig struct {
 	Name        string
 	Environment Environment
 	Color       string
 	Path        string // where the kubeconfig file is stored
+}
+
+func (s *Store) kubeconfig(name string, e Entry) Kubeconfig {
+	return Kubeconfig{
+		Name:        name,
+		Environment: e.Environment,
+		Color:       e.Color,
+		Path:        filepath.Join(s.configsDir(), e.File),
+	}
+}
+
+// Get returns the kubeconfig named name (compared case-insensitively).
+func (s *Store) Get(name string) (Kubeconfig, error) {
+	st, err := s.load()
+	if err != nil {
+		return Kubeconfig{}, err
+	}
+	stored := findEntry(st, name)
+	if stored == "" {
+		return Kubeconfig{}, fmt.Errorf("kubeconfig %q %w", name, ErrNotFound)
+	}
+	return s.kubeconfig(stored, st.Entries[stored]), nil
+}
+
+// Remove deletes the kubeconfig named name (compared case-insensitively)
+// together with its file.
+func (s *Store) Remove(name string) error {
+	st, err := s.load()
+	if err != nil {
+		return err
+	}
+	stored := findEntry(st, name)
+	if stored == "" {
+		return fmt.Errorf("kubeconfig %q %w", name, ErrNotFound)
+	}
+	// The file goes first: if that fails nothing has changed, and if
+	// saving the state fails afterwards a retry still succeeds.
+	if file := st.Entries[stored].File; file != "" {
+		err := os.Remove(filepath.Join(s.configsDir(), file))
+		if err != nil && !errors.Is(err, os.ErrNotExist) {
+			return err
+		}
+	}
+	delete(st.Entries, stored)
+	return s.save(st)
 }
 
 // List returns all stored kubeconfigs, sorted by name (case-insensitively).
@@ -96,12 +144,7 @@ func (s *Store) List() ([]Kubeconfig, error) {
 	}
 	list := make([]Kubeconfig, 0, len(st.Entries))
 	for name, e := range st.Entries {
-		list = append(list, Kubeconfig{
-			Name:        name,
-			Environment: e.Environment,
-			Color:       e.Color,
-			Path:        filepath.Join(s.configsDir(), e.File),
-		})
+		list = append(list, s.kubeconfig(name, e))
 	}
 	sort.Slice(list, func(i, j int) bool {
 		a, b := strings.ToLower(list[i].Name), strings.ToLower(list[j].Name)

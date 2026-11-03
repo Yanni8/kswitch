@@ -3,6 +3,7 @@ package cli
 import (
 	"errors"
 	"fmt"
+	"io"
 	"os"
 	"strings"
 
@@ -59,26 +60,33 @@ func runAdd(cmd *cobra.Command, _ []string) error {
 	}
 
 	p := prompt.New(cmd.InOrStdin(), out)
-
-	name, err := promptName(p, cfg.SuggestedName(), st)
-	if err != nil {
+	if err := addKubeconfig(p, out, st, raw, cfg.SuggestedName()); err != nil {
 		return fail(err)
+	}
+	os.Remove(scratch)
+	return nil
+}
+
+// addKubeconfig asks for a name (suggesting suggested), the environment,
+// and the color, then stores raw under them.
+func addKubeconfig(p *prompt.Prompter, out io.Writer, st *store.Store, raw []byte, suggested string) error {
+	name, err := promptName(p, suggested, st)
+	if err != nil {
+		return err
 	}
 	env, err := promptEnvironment(p, "")
 	if err != nil {
-		return fail(err)
+		return err
 	}
 	color, err := promptColor(p, "")
 	if err != nil {
-		return fail(err)
+		return err
 	}
 
 	path, err := st.Add(name, env, color, raw)
 	if err != nil {
-		return fail(err)
+		return err
 	}
-	os.Remove(scratch)
-
 	fmt.Fprintf(out, "\nAdded %q (%s, %s)\n", name, env, color)
 	fmt.Fprintf(out, "Saved to %s\n", path)
 	return nil

@@ -28,6 +28,18 @@ Kubeconfigs are stored with mode `0600` under `~/.config/kswitch/configs/`
 (override the directory with `KSWITCH_CONFIG_DIR`), and the metadata in
 `~/.config/kswitch/state.json`.
 
+### `kswitch import aws [cluster]`
+
+Imports the kubeconfig of an AWS EKS cluster instead of pasting one.
+Without a cluster name, the clusters in the region are listed to pick
+from. The kubeconfig is fetched with `aws eks update-kubeconfig`, so the
+AWS CLI must be installed and configured; `--region`, `--profile`, and
+`--role-arn` are passed through to it. You are then asked for the name
+(defaulting to the cluster name), the environment, and the color, as
+with `add`. Authentication to the cluster goes through the AWS CLI
+(`aws eks get-token`); the profile, if given, is remembered in the
+kubeconfig. `kswitch import` on its own lists the available providers.
+
 ### `kswitch edit [name]`
 
 Changes one thing about a kubeconfig (alias: `update`). Without a name

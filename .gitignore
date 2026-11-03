@@ -1,0 +1,19 @@
+# Build output
+/bin/
+/dist/
+/kswitch
+
+# Test and coverage artifacts
+*.test
+*.out
+coverage.html
+
+# Go workspace files
+go.work
+go.work.sum
+
+# Editor / OS noise
+.idea/
+.vscode/
+*.swp
+.DS_Store

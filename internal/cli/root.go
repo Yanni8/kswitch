@@ -1,17 +1,17 @@
-// Package cli defines the kswitch command-line interface.
+// Package cli defines the kubeswitch command-line interface.
 package cli
 
 import (
 	"github.com/spf13/cobra"
 
-	"github.com/Yanni8/kswitch/internal/version"
+	"github.com/Yanni8/kubeswitch/internal/version"
 )
 
 // NewRootCmd builds the root command with all subcommands attached.
 func NewRootCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:     "kswitch",
-		Short:   "kswitch is a fast context switcher",
+		Use:     "kubeswitch",
+		Short:   "kubeswitch is a fast context switcher",
 		Version: version.String(),
 		// Errors are reported once by main, not echoed by cobra as well.
 		SilenceUsage:  true,

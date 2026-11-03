@@ -31,7 +31,7 @@ func run(t *testing.T, args ...string) string {
 	t.Helper()
 	out, err := execute(t, "", args...)
 	if err != nil {
-		t.Fatalf("kswitch %s: %v", strings.Join(args, " "), err)
+		t.Fatalf("kubeswitch %s: %v", strings.Join(args, " "), err)
 	}
 	return out
 }

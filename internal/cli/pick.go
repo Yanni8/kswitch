@@ -3,8 +3,8 @@ package cli
 import (
 	"fmt"
 
-	"github.com/Yanni8/kswitch/internal/prompt"
-	"github.com/Yanni8/kswitch/internal/store"
+	"github.com/Yanni8/kubeswitch/internal/prompt"
+	"github.com/Yanni8/kubeswitch/internal/store"
 )
 
 // pickKubeconfig lets the user choose one of the stored kubeconfigs from

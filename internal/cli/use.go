@@ -12,10 +12,10 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/Yanni8/kswitch/internal/palette"
-	"github.com/Yanni8/kswitch/internal/prompt"
-	"github.com/Yanni8/kswitch/internal/store"
-	"github.com/Yanni8/kswitch/internal/terminal"
+	"github.com/Yanni8/kubeswitch/internal/palette"
+	"github.com/Yanni8/kubeswitch/internal/prompt"
+	"github.com/Yanni8/kubeswitch/internal/store"
+	"github.com/Yanni8/kubeswitch/internal/terminal"
 )
 
 func newUseCmd() *cobra.Command {
@@ -30,7 +30,7 @@ kubeconfig and the terminal background set to its color. Type exit to
 return to the previous shell; the background is restored.
 
 Without a name, pick the kubeconfig from a menu. The shell also gets
-KSWITCH_NAME and KSWITCH_ENV set, for example for use in your prompt.`,
+KUBESWITCH_NAME and KUBESWITCH_ENV set, for example for use in your prompt.`,
 		Args: cobra.MaximumNArgs(1),
 		RunE: runUse,
 	}
@@ -56,12 +56,12 @@ func runUse(cmd *cobra.Command, args []string) error {
 			return err
 		}
 		if target.Name == "" {
-			fmt.Fprintln(out, "No kubeconfigs yet. Add one with: kswitch add")
+			fmt.Fprintln(out, "No kubeconfigs yet. Add one with: kubeswitch add")
 			return nil
 		}
 	}
 
-	if outer := os.Getenv("KSWITCH_NAME"); outer != "" {
+	if outer := os.Getenv("KUBESWITCH_NAME"); outer != "" {
 		fmt.Fprintf(out, "Note: this shell is nested inside the one for %q.\n", outer)
 	}
 
@@ -88,11 +88,11 @@ func runShell(cmd *cobra.Command, k store.Kubeconfig) error {
 	c.Stderr = cmd.ErrOrStderr()
 	c.Env = append(os.Environ(),
 		"KUBECONFIG="+k.Path,
-		"KSWITCH_NAME="+k.Name,
-		"KSWITCH_ENV="+string(k.Environment),
+		"KUBESWITCH_NAME="+k.Name,
+		"KUBESWITCH_ENV="+string(k.Environment),
 	)
 
-	// Ctrl-C and Ctrl-\ are for whatever runs inside the shell; kswitch
+	// Ctrl-C and Ctrl-\ are for whatever runs inside the shell; kubeswitch
 	// has to survive them to restore the background afterwards.
 	signal.Ignore(syscall.SIGINT, syscall.SIGQUIT)
 	defer signal.Reset(syscall.SIGINT, syscall.SIGQUIT)

@@ -1,4 +1,4 @@
-module github.com/Yanni8/kswitch
+module github.com/Yanni8/kubeswitch
 
 go 1.21
 

@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/Yanni8/kswitch/internal/store"
+	"github.com/Yanni8/kubeswitch/internal/store"
 )
 
 func getKubeconfig(t *testing.T, name string) store.Kubeconfig {
@@ -195,7 +195,7 @@ func TestEditUnknownName(t *testing.T) {
 }
 
 func TestEditEmptyStore(t *testing.T) {
-	t.Setenv("KSWITCH_CONFIG_DIR", t.TempDir())
+	t.Setenv("KUBESWITCH_CONFIG_DIR", t.TempDir())
 
 	out, err := execute(t, "", "edit")
 	if err != nil {

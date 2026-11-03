@@ -11,7 +11,7 @@ import (
 func openTemp(t *testing.T) (*Store, string) {
 	t.Helper()
 	dir := t.TempDir()
-	t.Setenv("KSWITCH_CONFIG_DIR", dir)
+	t.Setenv("KUBESWITCH_CONFIG_DIR", dir)
 	s, err := Open()
 	if err != nil {
 		t.Fatalf("Open: %v", err)
@@ -20,14 +20,52 @@ func openTemp(t *testing.T) (*Store, string) {
 }
 
 func TestOpenDefaultsToUserConfigDir(t *testing.T) {
-	t.Setenv("KSWITCH_CONFIG_DIR", "")
+	t.Setenv("KUBESWITCH_CONFIG_DIR", "")
 	t.Setenv("XDG_CONFIG_HOME", "/xdg")
 	s, err := Open()
 	if err != nil {
 		t.Fatalf("Open: %v", err)
 	}
-	if want := filepath.Join("/xdg", "kswitch"); s.dir != want {
+	if want := filepath.Join("/xdg", "kubeswitch"); s.dir != want {
 		t.Errorf("dir = %q, want %q", s.dir, want)
+	}
+}
+
+func TestOpenAdoptsLegacyDir(t *testing.T) {
+	base := t.TempDir()
+	t.Setenv("KUBESWITCH_CONFIG_DIR", "")
+	t.Setenv("XDG_CONFIG_HOME", base)
+	old := filepath.Join(base, "kswitch")
+	if err := os.MkdirAll(filepath.Join(old, "configs"), 0o700); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(old, "state.json"), []byte(`{"entries":{"x":{"environment":"dev","color":"red","file":"x.yaml"}}}`), 0o600); err != nil {
+		t.Fatal(err)
+	}
+
+	s, err := Open()
+	if err != nil {
+		t.Fatalf("Open: %v", err)
+	}
+	if exists, _ := s.Exists("x"); !exists {
+		t.Error("the entry from the kswitch directory should be available")
+	}
+	if _, err := os.Stat(old); !os.IsNotExist(err) {
+		t.Errorf("the old directory should be gone (stat: %v)", err)
+	}
+	if _, err := os.Stat(filepath.Join(base, "kubeswitch", "configs")); err != nil {
+		t.Errorf("the data was not moved: %v", err)
+	}
+
+	// With both present, the new directory wins and the old one is left alone.
+	if err := os.Mkdir(old, 0o700); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := Open(); err != nil {
+		t.Fatalf("second Open: %v", err)
+	}
+	if _, err := os.Stat(old); err != nil {
+		t.Errorf("an old directory next to an existing new one must stay (stat: %v)", err)
 	}
 }
 

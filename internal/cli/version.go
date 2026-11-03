@@ -5,7 +5,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/Yanni8/kswitch/internal/version"
+	"github.com/Yanni8/kubeswitch/internal/version"
 )
 
 func newVersionCmd() *cobra.Command {

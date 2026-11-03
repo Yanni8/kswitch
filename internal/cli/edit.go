@@ -9,9 +9,9 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/Yanni8/kswitch/internal/kubeconfig"
-	"github.com/Yanni8/kswitch/internal/prompt"
-	"github.com/Yanni8/kswitch/internal/store"
+	"github.com/Yanni8/kubeswitch/internal/kubeconfig"
+	"github.com/Yanni8/kubeswitch/internal/prompt"
+	"github.com/Yanni8/kubeswitch/internal/store"
 )
 
 // editTemplate heads the scratch file when editing a stored kubeconfig.
@@ -53,7 +53,7 @@ func runEdit(cmd *cobra.Command, args []string) error {
 			return err
 		}
 		if target.Name == "" {
-			fmt.Fprintln(out, "No kubeconfigs yet. Add one with: kswitch add")
+			fmt.Fprintln(out, "No kubeconfigs yet. Add one with: kubeswitch add")
 			return nil
 		}
 	}

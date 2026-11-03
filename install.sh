@@ -1,21 +1,21 @@
 #!/bin/sh
-# Installs kswitch on Linux or macOS with a single command:
+# Installs kubeswitch on Linux or macOS with a single command:
 #
-#   curl -fsSL https://raw.githubusercontent.com/Yanni8/kswitch/main/install.sh | sh
+#   curl -fsSL https://raw.githubusercontent.com/Yanni8/kubeswitch/main/install.sh | sh
 #
 # It downloads the release archive for this machine, verifies it against
 # the release's checksums.txt, and installs the binary.
 #
 # Settings (environment variables):
-#   KSWITCH_VERSION      release to install, e.g. v1.2.3 (default: the latest)
-#   KSWITCH_INSTALL_DIR  where to put the binary (default: /usr/local/bin)
-#   KSWITCH_REPO         GitHub repository to download from (default: Yanni8/kswitch)
-#   KSWITCH_BASE_URL     base URL of the release assets, for mirrors and tests
+#   KUBESWITCH_VERSION      release to install, e.g. v1.2.3 (default: the latest)
+#   KUBESWITCH_INSTALL_DIR  where to put the binary (default: /usr/local/bin)
+#   KUBESWITCH_REPO         GitHub repository to download from (default: Yanni8/kubeswitch)
+#   KUBESWITCH_BASE_URL     base URL of the release assets, for mirrors and tests
 set -eu
 
-repo="${KSWITCH_REPO:-Yanni8/kswitch}"
-version="${KSWITCH_VERSION:-${1:-}}"
-install_dir="${KSWITCH_INSTALL_DIR:-/usr/local/bin}"
+repo="${KUBESWITCH_REPO:-Yanni8/kubeswitch}"
+version="${KUBESWITCH_VERSION:-${1:-}}"
+install_dir="${KUBESWITCH_INSTALL_DIR:-/usr/local/bin}"
 
 say() { printf '%s\n' "$*"; }
 fail() { printf 'install.sh: %s\n' "$*" >&2; exit 1; }
@@ -33,7 +33,7 @@ case "$arch" in
   aarch64 | arm64) arch=arm64 ;;
   *) fail "unsupported architecture: $arch (amd64 and arm64 are supported)" ;;
 esac
-asset="kswitch_${os}_${arch}.tar.gz"
+asset="kubeswitch_${os}_${arch}.tar.gz"
 
 # Where to download it from.
 case "$version" in
@@ -44,7 +44,7 @@ if [ -n "$version" ]; then
 else
   base="https://github.com/$repo/releases/latest/download"
 fi
-base="${KSWITCH_BASE_URL:-$base}"
+base="${KUBESWITCH_BASE_URL:-$base}"
 
 # Tools: curl or wget, sha256sum (Linux) or shasum (macOS).
 if command -v curl >/dev/null 2>&1; then
@@ -69,7 +69,7 @@ as_root() {
     return
   fi
   command -v sudo >/dev/null 2>&1 ||
-    fail "$install_dir is not writable and sudo is not available; set KSWITCH_INSTALL_DIR to a writable directory"
+    fail "$install_dir is not writable and sudo is not available; set KUBESWITCH_INSTALL_DIR to a writable directory"
   say "Using sudo to write to $install_dir"
   sudo "$@"
 }
@@ -89,18 +89,18 @@ actual=$(checksum "$tmp/$asset")
 [ "$actual" = "$expected" ] || fail "checksum mismatch for $asset: expected $expected, got $actual"
 say "Checksum verified"
 
-tar -xzf "$tmp/$asset" -C "$tmp" kswitch
+tar -xzf "$tmp/$asset" -C "$tmp" kubeswitch
 
 if [ ! -d "$install_dir" ]; then
   mkdir -p "$install_dir" 2>/dev/null || as_root mkdir -p "$install_dir"
 fi
 if [ -w "$install_dir" ]; then
-  install -m 755 "$tmp/kswitch" "$install_dir/kswitch"
+  install -m 755 "$tmp/kubeswitch" "$install_dir/kubeswitch"
 else
-  as_root install -m 755 "$tmp/kswitch" "$install_dir/kswitch"
+  as_root install -m 755 "$tmp/kubeswitch" "$install_dir/kubeswitch"
 fi
 
-say "Installed kswitch $("$install_dir/kswitch" version) to $install_dir/kswitch"
+say "Installed kubeswitch $("$install_dir/kubeswitch" version) to $install_dir/kubeswitch"
 case ":$PATH:" in
   *":$install_dir:"*) ;;
   *) say "Note: $install_dir is not in your PATH. Add it with: export PATH=\"$install_dir:\$PATH\"" ;;

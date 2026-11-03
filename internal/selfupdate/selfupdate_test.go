@@ -69,7 +69,7 @@ func release(t *testing.T, tag string, asset string, data []byte, sums string) *
 }
 
 func TestLatest(t *testing.T) {
-	u := release(t, "v1.2.3", "kswitch_linux_amd64.tar.gz", nil, "")
+	u := release(t, "v1.2.3", "kubeswitch_linux_amd64.tar.gz", nil, "")
 	if got, err := u.Latest(); err != nil || got != "v1.2.3" {
 		t.Errorf("Latest = %q, %v; want v1.2.3", got, err)
 	}
@@ -81,8 +81,8 @@ func TestLatest(t *testing.T) {
 }
 
 func TestDownload(t *testing.T) {
-	data := archive(t, map[string]string{"kswitch": "#!/bin/sh\necho new\n", "README.md": "docs"})
-	u := release(t, "v1.2.3", "kswitch_linux_amd64.tar.gz", data, sha(data)+"  kswitch_linux_amd64.tar.gz\n")
+	data := archive(t, map[string]string{"kubeswitch": "#!/bin/sh\necho new\n", "README.md": "docs"})
+	u := release(t, "v1.2.3", "kubeswitch_linux_amd64.tar.gz", data, sha(data)+"  kubeswitch_linux_amd64.tar.gz\n")
 
 	got, err := u.Download("v1.2.3")
 	if err != nil {
@@ -97,13 +97,13 @@ func TestDownload(t *testing.T) {
 }
 
 func TestDownloadRejectsBadChecksum(t *testing.T) {
-	data := archive(t, map[string]string{"kswitch": "new"})
-	u := release(t, "v1.2.3", "kswitch_linux_amd64.tar.gz", data, strings.Repeat("0", 64)+"  kswitch_linux_amd64.tar.gz\n")
+	data := archive(t, map[string]string{"kubeswitch": "new"})
+	u := release(t, "v1.2.3", "kubeswitch_linux_amd64.tar.gz", data, strings.Repeat("0", 64)+"  kubeswitch_linux_amd64.tar.gz\n")
 	if _, err := u.Download("v1.2.3"); err == nil || !strings.Contains(err.Error(), "checksum mismatch") {
 		t.Errorf("got %v, want a checksum mismatch", err)
 	}
 
-	u = release(t, "v1.2.3", "kswitch_linux_amd64.tar.gz", data, sha(data)+"  other.tar.gz\n")
+	u = release(t, "v1.2.3", "kubeswitch_linux_amd64.tar.gz", data, sha(data)+"  other.tar.gz\n")
 	if _, err := u.Download("v1.2.3"); err == nil || !strings.Contains(err.Error(), "not listed") {
 		t.Errorf("got %v, want an unlisted-asset error", err)
 	}
@@ -116,7 +116,7 @@ func TestExtractBinary(t *testing.T) {
 	if _, err := extractBinary([]byte("not a tarball")); err == nil {
 		t.Error("garbage must be rejected")
 	}
-	got, err := extractBinary(archive(t, map[string]string{"./kswitch": "bin"}))
+	got, err := extractBinary(archive(t, map[string]string{"./kubeswitch": "bin"}))
 	if err != nil || string(got) != "bin" {
 		t.Errorf("nested name: got %q, %v", got, err)
 	}
@@ -124,7 +124,7 @@ func TestExtractBinary(t *testing.T) {
 
 func TestReplace(t *testing.T) {
 	dir := t.TempDir()
-	exe := filepath.Join(dir, "kswitch")
+	exe := filepath.Join(dir, "kubeswitch")
 	if err := os.WriteFile(exe, []byte("old"), 0o750); err != nil {
 		t.Fatal(err)
 	}
@@ -138,7 +138,7 @@ func TestReplace(t *testing.T) {
 	if info, _ := os.Stat(exe); info.Mode().Perm() != 0o750 {
 		t.Errorf("mode = %o, want the original 750", info.Mode().Perm())
 	}
-	if left, _ := filepath.Glob(filepath.Join(dir, ".kswitch-update-*")); len(left) != 0 {
+	if left, _ := filepath.Glob(filepath.Join(dir, ".kubeswitch-update-*")); len(left) != 0 {
 		t.Errorf("temp files left behind: %v", left)
 	}
 }
@@ -148,7 +148,7 @@ func TestReplaceReportsPermissionErrors(t *testing.T) {
 		t.Skip("root can write anywhere")
 	}
 	dir := t.TempDir()
-	exe := filepath.Join(dir, "kswitch")
+	exe := filepath.Join(dir, "kubeswitch")
 	if err := os.WriteFile(exe, []byte("old"), 0o755); err != nil {
 		t.Fatal(err)
 	}

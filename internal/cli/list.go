@@ -6,8 +6,8 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/Yanni8/kswitch/internal/prompt"
-	"github.com/Yanni8/kswitch/internal/store"
+	"github.com/Yanni8/kubeswitch/internal/prompt"
+	"github.com/Yanni8/kubeswitch/internal/store"
 )
 
 func newListCmd() *cobra.Command {
@@ -32,7 +32,7 @@ func runList(cmd *cobra.Command, _ []string) error {
 
 	out := cmd.OutOrStdout()
 	if len(configs) == 0 {
-		fmt.Fprintln(out, "No kubeconfigs yet. Add one with: kswitch add")
+		fmt.Fprintln(out, "No kubeconfigs yet. Add one with: kubeswitch add")
 		return nil
 	}
 

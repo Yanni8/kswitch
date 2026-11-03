@@ -1,6 +1,6 @@
 package cli
 
-import "github.com/Yanni8/kswitch/internal/palette"
+import "github.com/Yanni8/kubeswitch/internal/palette"
 
 // colorSwatch previews the named palette color, or returns "" if the
 // name is not in the palette.

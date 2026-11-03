@@ -1,7 +1,7 @@
 # Build output
 /bin/
 /dist/
-/kswitch
+/kubeswitch
 
 # Test and coverage artifacts
 *.test

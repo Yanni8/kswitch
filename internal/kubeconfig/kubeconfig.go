@@ -9,7 +9,7 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-// Config is the subset of a kubeconfig that kswitch cares about.
+// Config is the subset of a kubeconfig that kubeswitch cares about.
 type Config struct {
 	APIVersion     string      `yaml:"apiVersion"`
 	Kind           string      `yaml:"kind"`

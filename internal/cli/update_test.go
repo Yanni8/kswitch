@@ -15,7 +15,7 @@ import (
 	"testing"
 )
 
-// fakeBinary stands in for a released kswitch: it reports its version.
+// fakeBinary stands in for a released kubeswitch: it reports its version.
 const fakeBinary = "#!/bin/sh\necho \"v9.9.9 (fake)\"\n"
 
 // fakeRelease serves a GitHub-like release of tag for this platform, with
@@ -28,14 +28,14 @@ func fakeRelease(t *testing.T, tag string, corrupt bool) string {
 	var buf bytes.Buffer
 	gz := gzip.NewWriter(&buf)
 	tw := tar.NewWriter(gz)
-	if err := tw.WriteHeader(&tar.Header{Name: "kswitch", Mode: 0o755, Size: int64(len(fakeBinary)), Typeflag: tar.TypeReg}); err != nil {
+	if err := tw.WriteHeader(&tar.Header{Name: "kubeswitch", Mode: 0o755, Size: int64(len(fakeBinary)), Typeflag: tar.TypeReg}); err != nil {
 		t.Fatal(err)
 	}
 	tw.Write([]byte(fakeBinary))
 	tw.Close()
 	gz.Close()
 	archive := buf.Bytes()
-	asset := "kswitch_" + runtime.GOOS + "_" + runtime.GOARCH + ".tar.gz"
+	asset := "kubeswitch_" + runtime.GOOS + "_" + runtime.GOARCH + ".tar.gz"
 	sum := sha256.Sum256(archive)
 	checksum := hex.EncodeToString(sum[:])
 	if corrupt {
@@ -56,7 +56,7 @@ func fakeRelease(t *testing.T, tag string, corrupt bool) string {
 	srv = httptest.NewServer(mux)
 	t.Cleanup(srv.Close)
 
-	exe := filepath.Join(t.TempDir(), "kswitch")
+	exe := filepath.Join(t.TempDir(), "kubeswitch")
 	if err := os.WriteFile(exe, []byte("#!/bin/sh\necho old\n"), 0o755); err != nil {
 		t.Fatal(err)
 	}
@@ -76,8 +76,8 @@ func TestUpdateInstallsLatest(t *testing.T) {
 		t.Fatalf("update failed: %v\n%s", err, out)
 	}
 	for _, want := range []string{
-		"Downloading kswitch v9.9.9 for " + runtime.GOOS + "/" + runtime.GOARCH,
-		"Updated kswitch dev to v9.9.9 at " + exe,
+		"Downloading kubeswitch v9.9.9 for " + runtime.GOOS + "/" + runtime.GOARCH,
+		"Updated kubeswitch dev to v9.9.9 at " + exe,
 		"Now running v9.9.9 (fake)",
 	} {
 		if !strings.Contains(out, want) {
@@ -96,7 +96,7 @@ func TestUpdateToGivenVersion(t *testing.T) {
 	if err != nil {
 		t.Fatalf("update failed: %v\n%s", err, out)
 	}
-	if !strings.Contains(out, "Updated kswitch dev to v9.9.9") {
+	if !strings.Contains(out, "Updated kubeswitch dev to v9.9.9") {
 		t.Errorf("unexpected output:\n%s", out)
 	}
 	if data, _ := os.ReadFile(exe); string(data) != fakeBinary {
@@ -111,7 +111,7 @@ func TestUpdateCheckOnly(t *testing.T) {
 	if err != nil {
 		t.Fatalf("update failed: %v\n%s", err, out)
 	}
-	if !strings.Contains(out, "kswitch v9.9.9 is available; you have dev.") {
+	if !strings.Contains(out, "kubeswitch v9.9.9 is available; you have dev.") {
 		t.Errorf("unexpected output:\n%s", out)
 	}
 	if data, _ := os.ReadFile(exe); strings.Contains(string(data), "fake") {
@@ -127,12 +127,12 @@ func TestUpdateAlreadyCurrent(t *testing.T) {
 	if err != nil {
 		t.Fatalf("update failed: %v\n%s", err, out)
 	}
-	if !strings.Contains(out, "kswitch dev is already the latest version.") {
+	if !strings.Contains(out, "kubeswitch dev is already the latest version.") {
 		t.Errorf("unexpected output:\n%s", out)
 	}
 
 	out, err = execute(t, "", "update", "dev")
-	if err != nil || !strings.Contains(out, "kswitch dev is already installed.") {
+	if err != nil || !strings.Contains(out, "kubeswitch dev is already installed.") {
 		t.Errorf("explicit current version: got %v\n%s", err, out)
 	}
 }
@@ -161,7 +161,7 @@ func TestUpdateSuggestsSudo(t *testing.T) {
 	t.Cleanup(func() { os.Chmod(dir, 0o700) })
 
 	_, err := execute(t, "", "update")
-	if err == nil || !strings.Contains(err.Error(), "sudo kswitch update") {
+	if err == nil || !strings.Contains(err.Error(), "sudo kubeswitch update") {
 		t.Fatalf("expected a sudo hint, got %v", err)
 	}
 }

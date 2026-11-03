@@ -5,7 +5,7 @@ import "runtime/debug"
 
 // Overridden via -ldflags, see the Makefile:
 //
-//	-X github.com/Yanni8/kswitch/internal/version.version=v1.2.3
+//	-X github.com/Yanni8/kubeswitch/internal/version.version=v1.2.3
 var (
 	version = "dev"
 	commit  = ""

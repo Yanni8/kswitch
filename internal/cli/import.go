@@ -5,10 +5,10 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/Yanni8/kswitch/internal/eks"
-	"github.com/Yanni8/kswitch/internal/kubeconfig"
-	"github.com/Yanni8/kswitch/internal/prompt"
-	"github.com/Yanni8/kswitch/internal/store"
+	"github.com/Yanni8/kubeswitch/internal/eks"
+	"github.com/Yanni8/kubeswitch/internal/kubeconfig"
+	"github.com/Yanni8/kubeswitch/internal/prompt"
+	"github.com/Yanni8/kubeswitch/internal/store"
 )
 
 func newImportCmd() *cobra.Command {
@@ -17,7 +17,7 @@ func newImportCmd() *cobra.Command {
 		Short: "Import a kubeconfig from an external provider",
 		Long: `Import a kubeconfig from an external provider instead of pasting it.
 
-Each provider is a subcommand; see "kswitch import <provider> --help".`,
+Each provider is a subcommand; see "kubeswitch import <provider> --help".`,
 		RunE: func(cmd *cobra.Command, _ []string) error {
 			return cmd.Help()
 		},
@@ -36,7 +36,7 @@ func newImportAWSCmd() *cobra.Command {
 Without a cluster name, the clusters in the region are listed to pick
 from. The kubeconfig is fetched with "aws eks update-kubeconfig", so the
 AWS CLI must be installed and configured; --region, --profile, and
---role-arn are passed through to it. kswitch then asks for a name
+--role-arn are passed through to it. kubeswitch then asks for a name
 (defaulting to the cluster name), the environment, and the color, as
 "add" does.
 

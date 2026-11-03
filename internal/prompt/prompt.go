@@ -1,4 +1,4 @@
-// Package prompt implements the questions kswitch asks interactively:
+// Package prompt implements the questions kubeswitch asks interactively:
 // arrow-key menus and an inline text field when attached to a terminal,
 // plain line-based prompts otherwise (piped input, tests).
 package prompt

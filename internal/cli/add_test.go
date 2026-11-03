@@ -31,7 +31,7 @@ users:
 func setupAdd(t *testing.T, editor func(path string) error) string {
 	t.Helper()
 	dir := t.TempDir()
-	t.Setenv("KSWITCH_CONFIG_DIR", dir)
+	t.Setenv("KUBESWITCH_CONFIG_DIR", dir)
 	stubEditor(t, editor)
 	return dir
 }
@@ -53,7 +53,7 @@ func paste(content string) func(string) error {
 	}
 }
 
-// execAdd runs "kswitch add" with stdin answering the prompts.
+// execAdd runs "kubeswitch add" with stdin answering the prompts.
 func execAdd(t *testing.T, stdin string) (string, error) {
 	t.Helper()
 	return execute(t, stdin, "add")
@@ -76,7 +76,7 @@ func readState(t *testing.T, dir string) map[string]map[string]string {
 
 func scratchFiles(t *testing.T) []string {
 	t.Helper()
-	left, err := filepath.Glob(filepath.Join(os.Getenv("TMPDIR"), "kswitch-*"))
+	left, err := filepath.Glob(filepath.Join(os.Getenv("TMPDIR"), "kubeswitch-*"))
 	if err != nil {
 		t.Fatal(err)
 	}

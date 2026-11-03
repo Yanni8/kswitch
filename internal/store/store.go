@@ -1,4 +1,4 @@
-// Package store persists the kubeconfigs added to kswitch together with
+// Package store persists the kubeconfigs added to kubeswitch together with
 // their metadata (environment and terminal background color).
 //
 // Layout of the store directory:
@@ -40,23 +40,43 @@ type state struct {
 	Entries map[string]Entry `json:"entries"`
 }
 
-// Store reads and writes kswitch's on-disk data.
+// Store reads and writes kubeswitch's on-disk data.
 type Store struct {
 	dir string
 }
 
-// Open returns the store at $KSWITCH_CONFIG_DIR, defaulting to the user
-// config directory (~/.config/kswitch on Linux). Nothing is created on
-// disk until the first write.
+// Open returns the store at $KUBESWITCH_CONFIG_DIR, defaulting to the user
+// config directory (~/.config/kubeswitch on Linux). Nothing is created on
+// disk until the first write, except that data left under the tool's
+// former name, kswitch, is moved into place once.
 func Open() (*Store, error) {
-	if dir := os.Getenv("KSWITCH_CONFIG_DIR"); dir != "" {
+	if dir := os.Getenv("KUBESWITCH_CONFIG_DIR"); dir != "" {
 		return &Store{dir: dir}, nil
 	}
 	base, err := os.UserConfigDir()
 	if err != nil {
 		return nil, fmt.Errorf("locating config dir: %w", err)
 	}
-	return &Store{dir: filepath.Join(base, "kswitch")}, nil
+	dir := filepath.Join(base, "kubeswitch")
+	if err := adoptLegacyDir(filepath.Join(base, "kswitch"), dir); err != nil {
+		return nil, err
+	}
+	return &Store{dir: dir}, nil
+}
+
+// adoptLegacyDir moves the data directory of the tool's former name to
+// dir, if dir does not exist yet and the old one does.
+func adoptLegacyDir(old, dir string) error {
+	if _, err := os.Stat(dir); err == nil {
+		return nil
+	}
+	if _, err := os.Stat(old); err != nil {
+		return nil
+	}
+	if err := os.Rename(old, dir); err != nil {
+		return fmt.Errorf("moving the kswitch data directory %s to %s: %w", old, dir, err)
+	}
+	return nil
 }
 
 func (s *Store) statePath() string  { return filepath.Join(s.dir, "state.json") }

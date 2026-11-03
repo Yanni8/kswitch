@@ -9,20 +9,20 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/Yanni8/kswitch/internal/kubeconfig"
-	"github.com/Yanni8/kswitch/internal/palette"
-	"github.com/Yanni8/kswitch/internal/prompt"
-	"github.com/Yanni8/kswitch/internal/store"
+	"github.com/Yanni8/kubeswitch/internal/kubeconfig"
+	"github.com/Yanni8/kubeswitch/internal/palette"
+	"github.com/Yanni8/kubeswitch/internal/prompt"
+	"github.com/Yanni8/kubeswitch/internal/store"
 )
 
 func newAddCmd() *cobra.Command {
 	return &cobra.Command{
 		Use:   "add",
 		Short: "Add a kubeconfig by pasting it into your editor",
-		Long: `Add a new kubeconfig to kswitch.
+		Long: `Add a new kubeconfig to kubeswitch.
 
 Opens your editor ($VISUAL or $EDITOR, default vim) on an empty scratch
-file. Paste the kubeconfig, save, and quit. kswitch then asks for a name
+file. Paste the kubeconfig, save, and quit. kubeswitch then asks for a name
 (defaulting to the kubeconfig's current context), whether it is a prod
 or a dev environment, and which terminal background color it gets.`,
 		Args: cobra.NoArgs,
@@ -97,7 +97,7 @@ func addKubeconfig(p *prompt.Prompter, out io.Writer, st *store.Store, raw []byt
 // edited text along with the scratch path. Content is nil if the file
 // was left empty apart from comments. The caller owns the scratch file.
 func editInEditor(header string, initial []byte) (content []byte, path string, err error) {
-	f, err := os.CreateTemp("", "kswitch-*.yaml")
+	f, err := os.CreateTemp("", "kubeswitch-*.yaml")
 	if err != nil {
 		return nil, "", err
 	}

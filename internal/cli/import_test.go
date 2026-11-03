@@ -9,7 +9,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/Yanni8/kswitch/internal/eks"
+	"github.com/Yanni8/kubeswitch/internal/eks"
 )
 
 // eksKubeconfig is what "aws eks update-kubeconfig --alias payments-prod
@@ -52,7 +52,7 @@ users:
 // kubecfg for update-kubeconfig. It returns the recorded calls.
 func stubAWS(t *testing.T, clusters []string, kubecfg string) *[][]string {
 	t.Helper()
-	t.Setenv("KSWITCH_CONFIG_DIR", t.TempDir())
+	t.Setenv("KUBESWITCH_CONFIG_DIR", t.TempDir())
 	var calls [][]string
 	orig := eks.Run
 	eks.Run = func(args ...string) ([]byte, error) {
@@ -101,7 +101,7 @@ func TestImportAWSByName(t *testing.T) {
 		}
 	}
 
-	saved, err := os.ReadFile(filepath.Join(os.Getenv("KSWITCH_CONFIG_DIR"), "configs", "payments-prod.yaml"))
+	saved, err := os.ReadFile(filepath.Join(os.Getenv("KUBESWITCH_CONFIG_DIR"), "configs", "payments-prod.yaml"))
 	if err != nil {
 		t.Fatalf("kubeconfig not stored: %v", err)
 	}
@@ -143,7 +143,7 @@ func TestImportAWSNoClusters(t *testing.T) {
 }
 
 func TestImportAWSCLIError(t *testing.T) {
-	t.Setenv("KSWITCH_CONFIG_DIR", t.TempDir())
+	t.Setenv("KUBESWITCH_CONFIG_DIR", t.TempDir())
 	orig := eks.Run
 	eks.Run = func(args ...string) ([]byte, error) {
 		return nil, errors.New("aws eks update-kubeconfig: An error occurred (ResourceNotFoundException)")

@@ -55,7 +55,7 @@ func ListClusters(o Options) ([]string, error) {
 // the profile when one is given.
 func Kubeconfig(cluster string, o Options) ([]byte, error) {
 	// The CLI writes a file; keep it in a private directory.
-	dir, err := os.MkdirTemp("", "kswitch-eks-")
+	dir, err := os.MkdirTemp("", "kubeswitch-eks-")
 	if err != nil {
 		return nil, err
 	}

@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/Yanni8/kswitch/internal/cli"
+	"github.com/Yanni8/kubeswitch/internal/cli"
 )
 
 func main() {
@@ -12,10 +12,10 @@ func main() {
 	if err == nil {
 		return
 	}
-	// A shell started by "kswitch use" passes its exit status through.
+	// A shell started by "kubeswitch use" passes its exit status through.
 	if code, ok := cli.ExitStatus(err); ok {
 		os.Exit(code)
 	}
-	fmt.Fprintf(os.Stderr, "kswitch: %v\n", err)
+	fmt.Fprintf(os.Stderr, "kubeswitch: %v\n", err)
 	os.Exit(1)
 }

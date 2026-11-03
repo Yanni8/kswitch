@@ -1,4 +1,4 @@
-// Package selfupdate fetches kswitch releases from GitHub and swaps the
+// Package selfupdate fetches kubeswitch releases from GitHub and swaps the
 // installed binary for a new one.
 package selfupdate
 
@@ -25,7 +25,7 @@ const maxSize = 256 << 20
 // Updater locates and fetches releases.
 type Updater struct {
 	// BaseURL is the repository URL on GitHub, such as
-	// "https://github.com/Yanni8/kswitch".
+	// "https://github.com/Yanni8/kubeswitch".
 	BaseURL string
 	// OS and Arch select the release asset, in GOOS/GOARCH terms.
 	OS, Arch string
@@ -43,7 +43,7 @@ func (u *Updater) client() *http.Client {
 
 // Asset is the name of the release archive for the platform.
 func (u *Updater) Asset() string {
-	return fmt.Sprintf("kswitch_%s_%s.tar.gz", u.OS, u.Arch)
+	return fmt.Sprintf("kubeswitch_%s_%s.tar.gz", u.OS, u.Arch)
 }
 
 // Latest returns the tag of the latest release, such as "v1.2.3". It
@@ -67,7 +67,7 @@ func (u *Updater) Latest() (string, error) {
 }
 
 // Download fetches the release archive for version, verifies it against
-// the release's checksums.txt, and returns the kswitch binary inside.
+// the release's checksums.txt, and returns the kubeswitch binary inside.
 func (u *Updater) Download(version string) ([]byte, error) {
 	base := fmt.Sprintf("%s/releases/download/%s/", u.BaseURL, version)
 	archive, err := u.get(base + u.Asset())
@@ -89,7 +89,7 @@ func (u *Updater) request(url string) *http.Request {
 	if err != nil {
 		panic(err) // the URLs are built from constants and validated input
 	}
-	req.Header.Set("User-Agent", "kswitch-update")
+	req.Header.Set("User-Agent", "kubeswitch-update")
 	return req
 }
 
@@ -122,7 +122,7 @@ func verify(archive []byte, name string, sums []byte) error {
 	return fmt.Errorf("%s is not listed in checksums.txt", name)
 }
 
-// extractBinary returns the kswitch file inside a .tar.gz archive.
+// extractBinary returns the kubeswitch file inside a .tar.gz archive.
 func extractBinary(archive []byte) ([]byte, error) {
 	gz, err := gzip.NewReader(bytes.NewReader(archive))
 	if err != nil {
@@ -137,11 +137,11 @@ func extractBinary(archive []byte) ([]byte, error) {
 		if err != nil {
 			return nil, fmt.Errorf("reading the archive: %w", err)
 		}
-		if hdr.Typeflag == tar.TypeReg && path.Base(hdr.Name) == "kswitch" {
+		if hdr.Typeflag == tar.TypeReg && path.Base(hdr.Name) == "kubeswitch" {
 			return io.ReadAll(io.LimitReader(tr, maxSize))
 		}
 	}
-	return nil, errors.New("the archive does not contain a kswitch binary")
+	return nil, errors.New("the archive does not contain a kubeswitch binary")
 }
 
 // Replace swaps the file at exe for binary, keeping its permissions. The
@@ -152,7 +152,7 @@ func Replace(exe string, binary []byte) error {
 	if info, err := os.Stat(exe); err == nil {
 		mode = info.Mode().Perm()
 	}
-	tmp, err := os.CreateTemp(filepath.Dir(exe), ".kswitch-update-*")
+	tmp, err := os.CreateTemp(filepath.Dir(exe), ".kubeswitch-update-*")
 	if err != nil {
 		return err
 	}

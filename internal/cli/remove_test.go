@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/Yanni8/kswitch/internal/store"
+	"github.com/Yanni8/kubeswitch/internal/store"
 )
 
 // seedStore points the store at a temp dir holding two kubeconfigs and
@@ -14,7 +14,7 @@ import (
 func seedStore(t *testing.T) string {
 	t.Helper()
 	dir := t.TempDir()
-	t.Setenv("KSWITCH_CONFIG_DIR", dir)
+	t.Setenv("KUBESWITCH_CONFIG_DIR", dir)
 	st, err := store.Open()
 	if err != nil {
 		t.Fatal(err)
@@ -132,7 +132,7 @@ func TestRemoveUnknownName(t *testing.T) {
 }
 
 func TestRemoveEmptyStore(t *testing.T) {
-	t.Setenv("KSWITCH_CONFIG_DIR", t.TempDir())
+	t.Setenv("KUBESWITCH_CONFIG_DIR", t.TempDir())
 
 	out, err := execute(t, "", "remove")
 	if err != nil {

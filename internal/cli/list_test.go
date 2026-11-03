@@ -4,17 +4,17 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/Yanni8/kswitch/internal/store"
+	"github.com/Yanni8/kubeswitch/internal/store"
 )
 
-// execList runs "kswitch list" (or the given alias) and returns its output.
+// execList runs "kubeswitch list" (or the given alias) and returns its output.
 func execList(t *testing.T, name string) (string, error) {
 	t.Helper()
 	return execute(t, "", name)
 }
 
 func TestListEmptyStore(t *testing.T) {
-	t.Setenv("KSWITCH_CONFIG_DIR", t.TempDir())
+	t.Setenv("KUBESWITCH_CONFIG_DIR", t.TempDir())
 
 	out, err := execList(t, "list")
 	if err != nil {
@@ -26,7 +26,7 @@ func TestListEmptyStore(t *testing.T) {
 }
 
 func TestListShowsConfigsSortedByName(t *testing.T) {
-	t.Setenv("KSWITCH_CONFIG_DIR", t.TempDir())
+	t.Setenv("KUBESWITCH_CONFIG_DIR", t.TempDir())
 	st, err := store.Open()
 	if err != nil {
 		t.Fatal(err)

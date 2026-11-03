@@ -16,13 +16,15 @@ curl -fsSL https://raw.githubusercontent.com/Yanni8/kubeswitch/main/install.sh |
 
 The [script](install.sh) picks the archive for your machine, verifies it
 against the release's `checksums.txt`, and installs the binary to
-`/usr/local/bin`, asking for `sudo` only if that directory is not
-writable. Set `KUBESWITCH_INSTALL_DIR` to install somewhere else (for
-example `~/.local/bin`) and `KUBESWITCH_VERSION` to pin a release:
+`~/.local/bin` — no `sudo` needed. If that directory is not on your
+`PATH` yet, the script prints the line to add to your shell profile. Set
+`KUBESWITCH_INSTALL_DIR` to install somewhere else (a root-owned
+directory such as `/usr/local/bin` is written with `sudo`) and
+`KUBESWITCH_VERSION` to pin a release:
 
 ```sh
 curl -fsSL https://raw.githubusercontent.com/Yanni8/kubeswitch/main/install.sh \
-  | KUBESWITCH_INSTALL_DIR=~/.local/bin KUBESWITCH_VERSION=v1.2.3 sh
+  | KUBESWITCH_INSTALL_DIR=/usr/local/bin KUBESWITCH_VERSION=v1.2.3 sh
 ```
 
 Later, `kubeswitch update` brings the installed binary to the latest

@@ -6,18 +6,20 @@
 #   curl -fsSL https://raw.githubusercontent.com/Yanni8/kubeswitch/main/install.sh | sh
 #
 # It downloads the release archive for this machine, verifies it against
-# the release's checksums.txt, and installs the binary.
+# the release's checksums.txt, and installs the binary into ~/.local/bin,
+# which needs no root privileges.
 #
 # Settings (environment variables):
 #   KUBESWITCH_VERSION      release to install, e.g. v1.2.3 (default: the latest)
-#   KUBESWITCH_INSTALL_DIR  where to put the binary (default: /usr/local/bin)
+#   KUBESWITCH_INSTALL_DIR  where to put the binary (default: ~/.local/bin;
+#                           a root-owned directory is written with sudo)
 #   KUBESWITCH_REPO         GitHub repository to download from (default: Yanni8/kubeswitch)
 #   KUBESWITCH_BASE_URL     base URL of the release assets, for mirrors and tests
 set -eu
 
 repo="${KUBESWITCH_REPO:-Yanni8/kubeswitch}"
 version="${KUBESWITCH_VERSION:-${1:-}}"
-install_dir="${KUBESWITCH_INSTALL_DIR:-/usr/local/bin}"
+install_dir="${KUBESWITCH_INSTALL_DIR:-$HOME/.local/bin}"
 
 say() { printf '%s\n' "$*"; }
 fail() { printf 'install.sh: %s\n' "$*" >&2; exit 1; }
@@ -105,5 +107,13 @@ fi
 say "Installed kubeswitch $("$install_dir/kubeswitch" version) to $install_dir/kubeswitch"
 case ":$PATH:" in
   *":$install_dir:"*) ;;
-  *) say "Note: $install_dir is not in your PATH. Add it with: export PATH=\"$install_dir:\$PATH\"" ;;
+  *)
+    # Spell the directory with $HOME so the line fits any shell profile.
+    case "$install_dir" in
+      "$HOME"/*) shown="\$HOME${install_dir#"$HOME"}" ;;
+      *) shown="$install_dir" ;;
+    esac
+    say "Note: $install_dir is not in your PATH. Add this line to your shell profile (~/.zshrc, ~/.bashrc, ...):"
+    say "  export PATH=\"$shown:\$PATH\""
+    ;;
 esac

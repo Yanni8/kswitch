@@ -58,7 +58,10 @@ Or build from source with `make install` (needs Go).
 
 Adds a kubeconfig. It opens your editor (`$VISUAL`, then `$EDITOR`,
 default `vim`) on an empty scratch file; paste the kubeconfig, save, and
-quit.
+quit. With `--file`/`-f` the kubeconfig is read from that file instead
+and stored as is (if it refers to certificates by relative path, you are
+warned, since the stored copy lives elsewhere; `import kubeconfig` makes
+such paths absolute).
 You are then asked for:
 
 - a human-readable name (defaults to the kubeconfig's current context),

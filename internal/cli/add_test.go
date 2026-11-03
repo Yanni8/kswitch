@@ -62,6 +62,92 @@ func execAdd(t *testing.T, stdin string) (string, error) {
 	return execute(t, stdin, "add")
 }
 
+// noEditor fails the test if the editor gets opened.
+func noEditor(t *testing.T) func(string) error {
+	return func(string) error {
+		t.Error("the editor must not be opened")
+		return errors.New("editor opened")
+	}
+}
+
+func TestAddFromFile(t *testing.T) {
+	dir := setupAdd(t, noEditor(t))
+	file := filepath.Join(t.TempDir(), "cluster.yaml")
+	if err := os.WriteFile(file, []byte(testKubeconfig), 0o600); err != nil {
+		t.Fatal(err)
+	}
+
+	out, err := execute(t, "\n1\n2\n", "add", "--file", file)
+	if err != nil {
+		t.Fatalf("add failed: %v\n%s", err, out)
+	}
+	for _, want := range []string{"Name for this kubeconfig [dev-cluster]: ", `Added "dev-cluster" (prod, red)`} {
+		if !strings.Contains(out, want) {
+			t.Errorf("output lacks %q:\n%s", want, out)
+		}
+	}
+	for _, unwanted := range []string{"Paste your kubeconfig", "Note:"} {
+		if strings.Contains(out, unwanted) {
+			t.Errorf("output should not contain %q:\n%s", unwanted, out)
+		}
+	}
+	saved, err := os.ReadFile(filepath.Join(dir, "configs", "dev-cluster.yaml"))
+	if err != nil {
+		t.Fatalf("kubeconfig not stored: %v", err)
+	}
+	if string(saved) != testKubeconfig {
+		t.Errorf("stored kubeconfig differs from the file:\n%s", saved)
+	}
+}
+
+func TestAddFromFileNotesRelativePaths(t *testing.T) {
+	setupAdd(t, noEditor(t))
+	file := filepath.Join(t.TempDir(), "cluster.yaml")
+	content := strings.Replace(testKubeconfig,
+		"server: https://127.0.0.1:6443",
+		"server: https://127.0.0.1:6443\n      certificate-authority: certs/ca.crt", 1)
+	if err := os.WriteFile(file, []byte(content), 0o600); err != nil {
+		t.Fatal(err)
+	}
+
+	out, err := execute(t, "\n1\n2\n", "add", "-f", file)
+	if err != nil {
+		t.Fatalf("add failed: %v\n%s", err, out)
+	}
+	if !strings.Contains(out, "Note: "+file+" refers to files by relative path (certs/ca.crt)") {
+		t.Errorf("expected a note about relative paths:\n%s", out)
+	}
+	if !strings.Contains(out, `Added "dev-cluster"`) {
+		t.Errorf("the kubeconfig should still be added:\n%s", out)
+	}
+}
+
+func TestAddFromFileErrors(t *testing.T) {
+	dir := setupAdd(t, noEditor(t))
+	files := t.TempDir()
+
+	if _, err := execute(t, "", "add", "-f", filepath.Join(files, "missing.yaml")); !os.IsNotExist(err) {
+		t.Errorf("missing file: got %v, want a not-exist error", err)
+	}
+
+	empty := filepath.Join(files, "empty.yaml")
+	os.WriteFile(empty, []byte("# nothing here\n"), 0o600)
+	if _, err := execute(t, "", "add", "-f", empty); err == nil || !strings.Contains(err.Error(), "is empty") {
+		t.Errorf("empty file: got %v", err)
+	}
+
+	bad := filepath.Join(files, "bad.yaml")
+	os.WriteFile(bad, []byte("foo: bar\n"), 0o600)
+	_, err := execute(t, "", "add", "-f", bad)
+	if err == nil || !strings.Contains(err.Error(), bad) || !strings.Contains(err.Error(), "does not look like a kubeconfig") {
+		t.Errorf("non-kubeconfig: got %v", err)
+	}
+
+	if _, err := os.Stat(filepath.Join(dir, "state.json")); !os.IsNotExist(err) {
+		t.Errorf("nothing should have been stored (stat: %v)", err)
+	}
+}
+
 func readState(t *testing.T, dir string) map[string]map[string]string {
 	t.Helper()
 	data, err := os.ReadFile(filepath.Join(dir, "state.json"))

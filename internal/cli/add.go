@@ -19,26 +19,36 @@ import (
 )
 
 func newAddCmd() *cobra.Command {
-	return &cobra.Command{
+	var file string
+	cmd := &cobra.Command{
 		Use:   "add",
-		Short: "Add a kubeconfig by pasting it into your editor",
+		Short: "Add a kubeconfig by pasting it into your editor or from a file",
 		Long: `Add a new kubeconfig to kubeswitch.
 
 Opens your editor ($VISUAL or $EDITOR, default vim) on an empty scratch
-file. Paste the kubeconfig, save, and quit. kubeswitch then asks for a name
-(defaulting to the kubeconfig's current context), whether it is a prod
-or a dev environment, and which terminal background color it gets.`,
+file. Paste the kubeconfig, save, and quit. With --file, the kubeconfig
+is read from that file instead and stored as is. kubeswitch then asks
+for a name (defaulting to the kubeconfig's current context), whether it
+is a prod or a dev environment, and which terminal background color it
+gets.`,
 		Args: cobra.NoArgs,
-		RunE: runAdd,
+		RunE: func(cmd *cobra.Command, _ []string) error {
+			return runAdd(cmd, file)
+		},
 	}
+	cmd.Flags().StringVarP(&file, "file", "f", "", "read the kubeconfig from this file instead of opening the editor")
+	return cmd
 }
 
-func runAdd(cmd *cobra.Command, _ []string) error {
+func runAdd(cmd *cobra.Command, file string) error {
 	out := cmd.OutOrStdout()
 
 	st, err := store.Open()
 	if err != nil {
 		return err
+	}
+	if file != "" {
+		return addFromFile(cmd, st, file)
 	}
 
 	fmt.Fprintln(out, "Paste your kubeconfig into the editor, then save and quit (quit without saving to abort).")
@@ -68,6 +78,31 @@ func runAdd(cmd *cobra.Command, _ []string) error {
 	}
 	os.Remove(scratch)
 	return nil
+}
+
+// addFromFile adds the kubeconfig in file, stored as is.
+func addFromFile(cmd *cobra.Command, st *store.Store, file string) error {
+	out := cmd.OutOrStdout()
+
+	raw, err := os.ReadFile(file)
+	if err != nil {
+		return err
+	}
+	if strings.TrimSpace(withoutComments(string(raw))) == "" {
+		return fmt.Errorf("%s is empty", file)
+	}
+	cfg, err := kubeconfig.Parse(raw)
+	if err != nil {
+		return fmt.Errorf("%s: %w", file, err)
+	}
+	if rel := kubeconfig.RelativePaths(raw); len(rel) > 0 {
+		fmt.Fprintf(out, "Note: %s refers to files by relative path (%s), which will not resolve from the stored copy. "+
+			"Make them absolute first, or use \"kubeswitch import kubeconfig %s\", which does that for you.\n",
+			file, strings.Join(rel, ", "), file)
+	}
+
+	p := prompt.New(cmd.InOrStdin(), out)
+	return addKubeconfig(p, out, st, raw, cfg.SuggestedName())
 }
 
 // addKubeconfig asks for a name (suggesting suggested), the environment,

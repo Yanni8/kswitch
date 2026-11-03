@@ -17,12 +17,14 @@ import (
 
 	"github.com/Yanni8/kubeswitch/internal/palette"
 	"github.com/Yanni8/kubeswitch/internal/prompt"
+	"github.com/Yanni8/kubeswitch/internal/session"
 	"github.com/Yanni8/kubeswitch/internal/store"
 	"github.com/Yanni8/kubeswitch/internal/terminal"
 )
 
 func newUseCmd() *cobra.Command {
-	return &cobra.Command{
+	var noBanner, staticBanner bool
+	cmd := &cobra.Command{
 		Use:     "use [name]",
 		Aliases: []string{"switch"},
 		Short:   "Switch to a kubeconfig in a new shell",
@@ -32,15 +34,35 @@ Starts a new shell ($SHELL) with KUBECONFIG pointing at the chosen
 kubeconfig and the terminal background set to its color. Type exit to
 return to the previous shell; the background is restored.
 
+For a prod kubeconfig a flashing PRODUCTION banner stays pinned to the
+bottom row of the terminal for the whole session (the shell gets one row
+less). --static-banner stops the flashing, --no-banner leaves the banner
+out.
+
 Without a name, pick the kubeconfig from a menu. The shell also gets
 KUBESWITCH_NAME and KUBESWITCH_ENV set, for example for use in your prompt.`,
 		Args:              cobra.MaximumNArgs(1),
 		ValidArgsFunction: completeKubeconfigNames,
-		RunE:              runUse,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return runUse(cmd, args, noBanner, staticBanner)
+		},
+	}
+	cmd.Flags().BoolVar(&noBanner, "no-banner", false, "do not pin a PRODUCTION banner to the bottom of the terminal")
+	cmd.Flags().BoolVar(&staticBanner, "static-banner", false, "show the PRODUCTION banner without flashing")
+	return cmd
+}
+
+// prodBanner is kept on the bottom row of the terminal while a prod
+// kubeconfig is in use.
+func prodBanner(name string, flash bool) session.Banner {
+	return session.Banner{
+		Text:  fmt.Sprintf("!!! PRODUCTION !!!   You are connected to the PROD cluster %q   —   type exit to leave   !!! PRODUCTION !!!", name),
+		Short: fmt.Sprintf("!!! PRODUCTION: %s — exit to leave !!!", name),
+		Flash: flash,
 	}
 }
 
-func runUse(cmd *cobra.Command, args []string) error {
+func runUse(cmd *cobra.Command, args []string, noBanner, staticBanner bool) error {
 	out := cmd.OutOrStdout()
 
 	st, err := store.Open()
@@ -72,36 +94,60 @@ func runUse(cmd *cobra.Command, args []string) error {
 	restore := applyColors(out, target.Color)
 	defer restore()
 
-	fmt.Fprintf(out, "Switched to %q (%s). Type exit to go back.\n", target.Name, target.Environment)
-	err = runShell(cmd, target)
+	var banner session.Banner
+	if target.Environment == store.EnvProd && !noBanner {
+		banner = prodBanner(target.Name, !staticBanner)
+	}
+
+	if target.Environment == store.EnvProd {
+		fmt.Fprintf(out, "Switched to %q. You are now connected to a PRODUCTION cluster. Type exit to go back.\n", target.Name)
+	} else {
+		fmt.Fprintf(out, "Switched to %q (%s). Type exit to go back.\n", target.Name, target.Environment)
+	}
+	err = runShell(cmd, target, banner)
 	restore()
 	fmt.Fprintf(out, "Back from %q.\n", target.Name)
 	return err
 }
 
 // runShell starts the user's shell with the kubeconfig active and waits
-// for it to exit. A non-zero exit status is returned as an exitError.
-func runShell(cmd *cobra.Command, k store.Kubeconfig) error {
+// for it to exit. With a banner, and a terminal to show it on, the shell
+// runs inside a session that pins the banner to the terminal's bottom
+// row. A non-zero exit status is returned as an exitError.
+func runShell(cmd *cobra.Command, k store.Kubeconfig, banner session.Banner) error {
 	shell := os.Getenv("SHELL")
 	if shell == "" {
 		shell = "/bin/sh"
 	}
 	c := exec.Command(shell)
-	c.Stdin = cmd.InOrStdin()
-	c.Stdout = cmd.OutOrStdout()
-	c.Stderr = cmd.ErrOrStderr()
 	c.Env = append(os.Environ(),
 		"KUBECONFIG="+k.Path,
 		"KUBESWITCH_NAME="+k.Name,
 		"KUBESWITCH_ENV="+string(k.Environment),
 	)
 
-	// Ctrl-C and Ctrl-\ are for whatever runs inside the shell; kubeswitch
-	// has to survive them to restore the background afterwards.
-	signal.Ignore(syscall.SIGINT, syscall.SIGQUIT)
-	defer signal.Reset(syscall.SIGINT, syscall.SIGQUIT)
+	// Ctrl-C and Ctrl-\ are for whatever runs inside the shell. They are
+	// caught rather than ignored: an ignored signal would be inherited by
+	// the shell and its children, leaving Ctrl-C dead in the session.
+	sigs := make(chan os.Signal, 1)
+	signal.Notify(sigs, syscall.SIGINT, syscall.SIGQUIT)
+	defer func() { signal.Stop(sigs); close(sigs) }()
+	go func() {
+		for range sigs {
+		}
+	}()
 
-	err := c.Run()
+	var err error
+	in, inOK := cmd.InOrStdin().(*os.File)
+	out, outOK := cmd.OutOrStdout().(*os.File)
+	if banner.Text != "" && inOK && outOK && prompt.IsTerminal(in) && prompt.IsTerminal(out) {
+		err = session.Run(c, in, out, banner)
+	} else {
+		c.Stdin = cmd.InOrStdin()
+		c.Stdout = cmd.OutOrStdout()
+		c.Stderr = cmd.ErrOrStderr()
+		err = c.Run()
+	}
 	var exit *exec.ExitError
 	if errors.As(err, &exit) {
 		code := exit.ExitCode()

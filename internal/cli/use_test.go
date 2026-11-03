@@ -31,7 +31,7 @@ func TestUseByNameStartsShellWithKubeconfig(t *testing.T) {
 		t.Fatalf("use failed: %v\n%s", err, out)
 	}
 	for _, want := range []string{
-		`Switched to "Payments Prod" (prod). Type exit to go back.`,
+		`Switched to "Payments Prod". You are now connected to a PRODUCTION cluster. Type exit to go back.`,
 		"KUBECONFIG=" + filepath.Join(dir, "configs", "payments-prod.yaml") + "\n",
 		"KUBESWITCH_NAME=Payments Prod\n",
 		"KUBESWITCH_ENV=prod\n",

@@ -148,6 +148,15 @@ it. Type `exit` to return to the previous shell, which restores both
 colors. Inside the shell `KUBESWITCH_NAME` and `KUBESWITCH_ENV` are set, handy
 for your prompt. The shell's exit status is passed through.
 
+For a prod kubeconfig, a `!!! PRODUCTION !!!` banner naming the cluster
+stays pinned to the bottom row of the terminal for the whole session and
+flashes between red and yellow once a second: the shell runs in a
+pseudo-terminal one row shorter, so the banner survives full-screen
+programs, `clear`, and window resizes. `--static-banner` keeps it from
+flashing and `--no-banner` leaves it out. Be aware that many terminals do
+not add lines scrolling off the top to their scrollback history while a
+row is pinned this way.
+
 The colors are deep shades (red is `#5a1515`, for example) so that a
 whole terminal in them stays comfortable and ANSI-colored output remains
 readable; white is the one light option. The swatches in the menus show

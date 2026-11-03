@@ -3,6 +3,7 @@ module github.com/Yanni8/kubeswitch
 go 1.21
 
 require (
+	github.com/creack/pty v1.1.24
 	github.com/spf13/cobra v1.10.2
 	golang.org/x/sys v0.29.0
 	golang.org/x/term v0.28.0

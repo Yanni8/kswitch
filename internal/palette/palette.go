@@ -56,10 +56,54 @@ func Find(name string) (Color, bool) {
 // Text returns the text color that reads best on the background: light
 // on dark shades, dark on light ones.
 func (c Color) Text() string {
-	if Contrast(c.Hex, lightText) >= Contrast(c.Hex, darkText) {
+	return TextOn(c.Hex)
+}
+
+// TextOn returns the text color that reads best on the "#rrggbb"
+// background bg.
+func TextOn(bg string) string {
+	if Contrast(bg, lightText) >= Contrast(bg, darkText) {
 		return lightText
 	}
 	return darkText
+}
+
+// Accent returns a "#rrggbb" background that goes with the color but
+// stands out on a terminal tinted in it: a lighter tint of a dark shade,
+// a darker one of a light shade.
+func (c Color) Accent() string {
+	r, g, b := rgb(c.Hex)
+	if luminance(c.Hex) > 0.5 {
+		return hexOf(scale(r, 0.6), scale(g, 0.6), scale(b, 0.6))
+	}
+	return hexOf(lighten(r, 0.55), lighten(g, 0.55), lighten(b, 0.55))
+}
+
+// NeutralAccent is the banner background used when no color is set: a
+// mid gray that reads on light and dark terminals alike.
+const NeutralAccent = "#8c8c8c"
+
+// Style returns an SGR sequence that paints readable text on the
+// "#rrggbb" background bg, in 24-bit color when the terminal is known to
+// support it. Otherwise fallback, an SGR parameter list such as "7" for
+// reverse video, is used.
+func Style(bg, fallback string) string {
+	if trueColor() {
+		return "\x1b[0;" + sgr(48, bg) + ";" + sgr(38, TextOn(bg)) + "m"
+	}
+	return "\x1b[0;" + fallback + "m"
+}
+
+func lighten(v uint8, amount float64) uint8 {
+	return uint8(math.Round(float64(v) + (255-float64(v))*amount))
+}
+
+func scale(v uint8, factor float64) uint8 {
+	return uint8(math.Round(float64(v) * factor))
+}
+
+func hexOf(r, g, b uint8) string {
+	return fmt.Sprintf("#%02x%02x%02x", r, g, b)
 }
 
 // Swatch previews text on the background, for menus and lists. Without

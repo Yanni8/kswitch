@@ -19,7 +19,8 @@ import (
 type Banner struct {
 	Text  string // centered on the row
 	Short string // used instead when Text does not fit the width
-	Flash bool   // alternate between the two alarm styles, once a second
+	Style string // SGR sequence the row is drawn in; the alarm style when empty
+	Flash bool   // alternate between the style and the second alarm style, once a second
 }
 
 // The alarm styles: bold white on red, and bold black on bright yellow
@@ -69,7 +70,10 @@ func (s *screen) paint() string {
 // line renders the banner centered across the whole width in the
 // current alarm style.
 func (s *screen) line() string {
-	style := styleAlert
+	style := s.banner.Style
+	if style == "" {
+		style = styleAlert
+	}
 	if s.banner.Flash && s.phase%2 == 1 {
 		style = styleWarn
 	}

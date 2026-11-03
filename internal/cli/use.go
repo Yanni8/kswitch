@@ -34,10 +34,10 @@ Starts a new shell ($SHELL) with KUBECONFIG pointing at the chosen
 kubeconfig and the terminal background set to its color. Type exit to
 return to the previous shell; the background is restored.
 
-For a prod kubeconfig a flashing PRODUCTION banner stays pinned to the
-bottom row of the terminal for the whole session (the shell gets one row
-less). --static-banner stops the flashing, --no-banner leaves the banner
-out.
+A banner stays pinned to the bottom row of the terminal for the whole
+session (the shell gets one row less): a quiet one with the kubeconfig's
+name, or a flashing PRODUCTION warning for a prod kubeconfig.
+--static-banner stops the flashing, --no-banner leaves the banner out.
 
 Without a name, pick the kubeconfig from a menu. The shell also gets
 KUBESWITCH_NAME and KUBESWITCH_ENV set, for example for use in your prompt.`,
@@ -47,7 +47,7 @@ KUBESWITCH_NAME and KUBESWITCH_ENV set, for example for use in your prompt.`,
 			return runUse(cmd, args, noBanner, staticBanner)
 		},
 	}
-	cmd.Flags().BoolVar(&noBanner, "no-banner", false, "do not pin a PRODUCTION banner to the bottom of the terminal")
+	cmd.Flags().BoolVar(&noBanner, "no-banner", false, "do not pin a banner to the bottom of the terminal")
 	cmd.Flags().BoolVar(&staticBanner, "static-banner", false, "show the PRODUCTION banner without flashing")
 	return cmd
 }
@@ -60,6 +60,17 @@ func prodBanner(name string, flash bool) session.Banner {
 		Short: fmt.Sprintf("!!! PRODUCTION: %s — exit to leave !!!", name),
 		Flash: flash,
 	}
+}
+
+// quietBanner is kept on the bottom row for any other kubeconfig: just
+// its name, on a background tinted to go with the kubeconfig's color
+// (or a neutral gray when it has none).
+func quietBanner(name, color string) session.Banner {
+	bg := palette.NeutralAccent
+	if c, ok := palette.Find(color); ok {
+		bg = c.Accent()
+	}
+	return session.Banner{Text: name, Style: palette.Style(bg, "7")}
 }
 
 func runUse(cmd *cobra.Command, args []string, noBanner, staticBanner bool) error {
@@ -95,8 +106,12 @@ func runUse(cmd *cobra.Command, args []string, noBanner, staticBanner bool) erro
 	defer restore()
 
 	var banner session.Banner
-	if target.Environment == store.EnvProd && !noBanner {
+	switch {
+	case noBanner:
+	case target.Environment == store.EnvProd:
 		banner = prodBanner(target.Name, !staticBanner)
+	default:
+		banner = quietBanner(target.Name, target.Color)
 	}
 
 	if target.Environment == store.EnvProd {

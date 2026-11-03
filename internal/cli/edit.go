@@ -31,8 +31,9 @@ func newEditCmd() *cobra.Command {
 Without a name, pick the kubeconfig from a menu. You then choose what
 to change: the kubeconfig contents (opened in your editor), the name,
 the environment, or the terminal background color.`,
-		Args: cobra.MaximumNArgs(1),
-		RunE: runEdit,
+		Args:              cobra.MaximumNArgs(1),
+		ValidArgsFunction: completeKubeconfigNames,
+		RunE:              runEdit,
 	}
 }
 

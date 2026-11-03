@@ -34,8 +34,9 @@ return to the previous shell; the background is restored.
 
 Without a name, pick the kubeconfig from a menu. The shell also gets
 KUBESWITCH_NAME and KUBESWITCH_ENV set, for example for use in your prompt.`,
-		Args: cobra.MaximumNArgs(1),
-		RunE: runUse,
+		Args:              cobra.MaximumNArgs(1),
+		ValidArgsFunction: completeKubeconfigNames,
+		RunE:              runUse,
 	}
 }
 

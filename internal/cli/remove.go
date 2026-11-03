@@ -22,7 +22,8 @@ func newRemoveCmd() *cobra.Command {
 
 Without a name, pick the kubeconfig from a menu. You are asked to
 confirm unless --yes is given.`,
-		Args: cobra.MaximumNArgs(1),
+		Args:              cobra.MaximumNArgs(1),
+		ValidArgsFunction: completeKubeconfigNames,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return runRemove(cmd, args, yes)
 		},

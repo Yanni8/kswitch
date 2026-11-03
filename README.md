@@ -52,6 +52,15 @@ gh attestation verify kubeswitch_linux_amd64.tar.gz --owner Yanni8
 
 Or build from source with `make install` (needs Go).
 
+## Shell completion
+
+`kubeswitch completion bash|zsh|fish|powershell` prints the completion
+script for your shell; `kubeswitch completion zsh --help` (and so on)
+explains where to put it. Besides commands and flags, it completes the
+names of your kubeconfigs for `use`, `edit`, and `remove`, so
+`kubeswitch use pay<Tab>` expands to `Payments Prod` (zsh and fish also
+show each one's environment and color).
+
 ## Commands
 
 ### `kubeswitch add`

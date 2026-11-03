@@ -14,20 +14,14 @@ import (
 	"github.com/Yanni8/kswitch/internal/store"
 )
 
-// addTemplate heads the scratch file when adding a kubeconfig; it is
-// stripped again before the pasted kubeconfig is stored.
-const addTemplate = `# Paste your kubeconfig below, then save and quit.
-# Quit without saving (or leave the file empty) to abort.
-`
-
 func newAddCmd() *cobra.Command {
 	return &cobra.Command{
 		Use:   "add",
 		Short: "Add a kubeconfig by pasting it into your editor",
 		Long: `Add a new kubeconfig to kswitch.
 
-Opens your editor ($VISUAL or $EDITOR, default vim) on a scratch file.
-Paste the kubeconfig, save, and quit. kswitch then asks for a name
+Opens your editor ($VISUAL or $EDITOR, default vim) on an empty scratch
+file. Paste the kubeconfig, save, and quit. kswitch then asks for a name
 (defaulting to the kubeconfig's current context), whether it is a prod
 or a dev environment, and which terminal background color it gets.`,
 		Args: cobra.NoArgs,
@@ -43,7 +37,8 @@ func runAdd(cmd *cobra.Command, _ []string) error {
 		return err
 	}
 
-	raw, scratch, err := editInEditor(addTemplate, nil)
+	fmt.Fprintln(out, "Paste your kubeconfig into the editor, then save and quit (quit without saving to abort).")
+	raw, scratch, err := editInEditor("", nil)
 	if err != nil {
 		return err
 	}

@@ -53,20 +53,6 @@ func paste(content string) func(string) error {
 	}
 }
 
-// pasteBelowTemplate returns a fake editor that appends content after the
-// pre-filled instructions, like a user pasting into the real editor.
-func pasteBelowTemplate(content string) func(string) error {
-	return func(path string) error {
-		f, err := os.OpenFile(path, os.O_APPEND|os.O_WRONLY, 0)
-		if err != nil {
-			return err
-		}
-		defer f.Close()
-		_, err = f.WriteString(content)
-		return err
-	}
-}
-
 // execAdd runs "kswitch add" with stdin answering the prompts.
 func execAdd(t *testing.T, stdin string) (string, error) {
 	t.Helper()
@@ -129,18 +115,26 @@ func TestAddWithDefaults(t *testing.T) {
 	}
 }
 
-func TestAddStripsTemplate(t *testing.T) {
-	dir := setupAdd(t, pasteBelowTemplate(testKubeconfig))
+func TestAddOpensAnEmptyScratchFile(t *testing.T) {
+	var seen []byte
+	setupAdd(t, func(path string) error {
+		data, err := os.ReadFile(path)
+		if err != nil {
+			return err
+		}
+		seen = data
+		return os.WriteFile(path, []byte(testKubeconfig), 0o600)
+	})
 
-	if out, err := execAdd(t, "\n1\n2\n"); err != nil {
+	out, err := execAdd(t, "\n1\n2\n")
+	if err != nil {
 		t.Fatalf("add failed: %v\n%s", err, out)
 	}
-	saved, err := os.ReadFile(filepath.Join(dir, "configs", "dev-cluster.yaml"))
-	if err != nil {
-		t.Fatalf("kubeconfig not stored: %v", err)
+	if len(seen) != 0 {
+		t.Errorf("the scratch file should be empty, the editor saw %q", seen)
 	}
-	if string(saved) != testKubeconfig {
-		t.Errorf("template was not stripped:\n%s", saved)
+	if !strings.Contains(out, "Paste your kubeconfig into the editor") {
+		t.Errorf("expected a hint before the editor opens:\n%s", out)
 	}
 }
 

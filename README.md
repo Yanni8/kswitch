@@ -8,7 +8,8 @@ config so prod is never mistaken for dev.
 ### `kswitch add`
 
 Adds a kubeconfig. It opens your editor (`$VISUAL`, then `$EDITOR`,
-default `vim`) on a scratch file; paste the kubeconfig, save, and quit.
+default `vim`) on an empty scratch file; paste the kubeconfig, save, and
+quit.
 You are then asked for:
 
 - a human-readable name (defaults to the kubeconfig's current context),

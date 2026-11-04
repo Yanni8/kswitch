@@ -37,7 +37,8 @@ func newUpdateCmd() *cobra.Command {
 Downloads the latest release (or the given version, such as v1.2.3) for
 this platform, verifies it against the release's checksums, and replaces
 the running binary in place. If the binary's directory is not writable,
-run "sudo kubeswitch update".`,
+run "sudo kubeswitch update". A Homebrew install is left to Homebrew:
+run "brew upgrade kubeswitch" instead.`,
 		Args: cobra.MaximumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return runUpdate(cmd, args, check)
@@ -51,6 +52,21 @@ func runUpdate(cmd *cobra.Command, args []string, check bool) error {
 	out := cmd.OutOrStdout()
 	if runtime.GOOS == "windows" {
 		return fmt.Errorf("updating in place is not supported on Windows yet; download the new release from %s/releases", releaseRepoURL)
+	}
+
+	exe, err := executablePath()
+	if err != nil {
+		return err
+	}
+	if resolved, err := filepath.EvalSymlinks(exe); err == nil {
+		exe = resolved
+	}
+	// Homebrew keeps its own books on what it installed, so a binary in
+	// its cellar is upgraded with "brew upgrade" rather than replaced
+	// behind Homebrew's back.
+	homebrew := selfupdate.InstalledWithHomebrew(exe)
+	if homebrew && !check {
+		return fmt.Errorf("%s is managed by Homebrew\nTry: brew upgrade kubeswitch", exe)
 	}
 
 	base := updateBaseURL
@@ -83,16 +99,12 @@ func runUpdate(cmd *cobra.Command, args []string, check bool) error {
 	}
 
 	if check {
-		fmt.Fprintf(out, "kubeswitch %s is available; you have %s. Run \"kubeswitch update\" to install it.\n", target, current)
+		how := "kubeswitch update"
+		if homebrew {
+			how = "brew upgrade kubeswitch"
+		}
+		fmt.Fprintf(out, "kubeswitch %s is available; you have %s. Run %q to install it.\n", target, current, how)
 		return nil
-	}
-
-	exe, err := executablePath()
-	if err != nil {
-		return err
-	}
-	if resolved, err := filepath.EvalSymlinks(exe); err == nil {
-		exe = resolved
 	}
 
 	fmt.Fprintf(out, "Downloading kubeswitch %s for %s/%s...\n", target, runtime.GOOS, runtime.GOARCH)

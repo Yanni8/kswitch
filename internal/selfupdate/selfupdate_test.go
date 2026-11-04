@@ -168,3 +168,20 @@ func TestReplaceReportsPermissionErrors(t *testing.T) {
 		t.Error("the binary must be untouched after a failure")
 	}
 }
+
+func TestInstalledWithHomebrew(t *testing.T) {
+	tests := map[string]bool{
+		"/opt/homebrew/Cellar/kubeswitch/1.2.3/bin/kubeswitch":              true,
+		"/usr/local/Cellar/kubeswitch/1.2.3/bin/kubeswitch":                 true,
+		"/home/linuxbrew/.linuxbrew/Cellar/kubeswitch/1.2.3/bin/kubeswitch": true,
+		"/usr/local/bin/kubeswitch":                                         false,
+		"/home/me/.local/bin/kubeswitch":                                    false,
+		"/home/me/Cellars/kubeswitch":                                       false,
+		"":                                                                  false,
+	}
+	for exe, want := range tests {
+		if got := InstalledWithHomebrew(exe); got != want {
+			t.Errorf("InstalledWithHomebrew(%q) = %v, want %v", exe, got, want)
+		}
+	}
+}

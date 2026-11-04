@@ -7,6 +7,21 @@ config so prod is never mistaken for dev.
 
 ## Installation
 
+### Homebrew
+
+On macOS and Linux with [Homebrew](https://brew.sh):
+
+```sh
+brew install Yanni8/tap/kubeswitch
+```
+
+This adds the [Yanni8/homebrew-tap](https://github.com/Yanni8/homebrew-tap)
+tap and installs the release binary for your machine together with the
+bash, zsh, and fish completions. Later, `brew upgrade kubeswitch` brings
+it to the latest release.
+
+### Install script
+
 On Linux and macOS (amd64 or arm64), one command installs the latest
 release:
 
@@ -61,7 +76,8 @@ script for your shell; `kubeswitch completion zsh --help` (and so on)
 explains where to put it. Besides commands and flags, it completes the
 names of your kubeconfigs for `use`, `edit`, and `remove`, so
 `kubeswitch use pay<Tab>` expands to `Payments Prod` (zsh and fish also
-show each one's environment and color).
+show each one's environment and color). A Homebrew install comes with
+the bash, zsh, and fish completions already in place.
 
 ## Commands
 
@@ -176,8 +192,10 @@ Updates kubeswitch itself to the latest release, or to the given version
 for this platform, verifies it against the release's `checksums.txt`,
 and replaces the running binary in place. `--check` only reports whether
 a newer release exists. If the binary's directory is not writable, run
-`sudo kubeswitch update`. Not supported on Windows yet. `KUBESWITCH_UPDATE_URL`
-points it at a mirror of the GitHub repository URL.
+`sudo kubeswitch update`. A Homebrew install is left to Homebrew: the
+command points you to `brew upgrade kubeswitch` instead (`--check` still
+works). Not supported on Windows yet. `KUBESWITCH_UPDATE_URL` points it
+at a mirror of the GitHub repository URL.
 
 ### `kubeswitch version`
 
@@ -215,3 +233,20 @@ assets. Only the title, notes, and the pre-release/latest flags stay
 editable. The workflow is built for this: it creates the release as a
 draft, attaches all assets, and publishes only once every upload has
 succeeded, since assets cannot be attached after publishing.
+
+### Homebrew tap
+
+Once the release is out, the [Homebrew workflow](.github/workflows/homebrew.yml)
+publishes its formula: it generates the formula with
+`scripts/homebrew-formula.sh` (`make formula` prints it for the archives
+in `dist/`), installs and tests it with Homebrew on Linux and macOS, and
+pushes it as `Formula/kubeswitch.rb` to the tap repository,
+[Yanni8/homebrew-tap](https://github.com/Yanni8/homebrew-tap), which is
+what `brew install Yanni8/tap/kubeswitch` reads. Pre-releases are not
+published there. The push needs a `HOMEBREW_TAP_TOKEN` repository
+secret holding a fine-grained personal access token with read and write
+access to the tap repository's contents; without it the formula is
+still tested, just not published. To set the tap up, or to republish
+the formula for an existing release, create the tap repository (it may
+be empty), add the secret, and run the workflow by hand under Actions →
+Homebrew → Run workflow with the release tag.

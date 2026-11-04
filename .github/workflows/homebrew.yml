@@ -1,0 +1,102 @@
+# Copyright 2026 Yannick Müller
+# SPDX-License-Identifier: Apache-2.0
+
+name: Homebrew
+
+# Publishes the Homebrew formula of a release to the tap repository
+# (<owner>/homebrew-tap), which is what "brew install <owner>/tap/kubeswitch"
+# installs from. The release workflow calls this for every release; run
+# it by hand (Actions → Homebrew → Run workflow) to publish the formula
+# for an existing release, for instance when setting up the tap.
+on:
+  workflow_call:
+    inputs:
+      version:
+        description: Release tag, such as v1.2.3
+        required: true
+        type: string
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Release tag, such as v1.2.3
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+env:
+  HOMEBREW_NO_AUTO_UPDATE: "1"
+  HOMEBREW_NO_INSTALL_CLEANUP: "1"
+  HOMEBREW_NO_ENV_HINTS: "1"
+
+jobs:
+  test:
+    name: Test the formula
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v4
+
+      - name: Generate the formula
+        env:
+          VERSION: ${{ inputs.version }}
+        run: scripts/homebrew-formula.sh "$VERSION" > "$RUNNER_TEMP/kubeswitch.rb"
+
+      - name: Install and test it with Homebrew
+        run: |
+          # The Linux runner image ships Homebrew but does not put it on PATH.
+          command -v brew >/dev/null || eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
+          # Formulae are audited and installed from a tap, so make a local one.
+          brew tap-new --no-git local/test
+          mkdir -p "$(brew --repository local/test)/Formula"
+          cp "$RUNNER_TEMP/kubeswitch.rb" "$(brew --repository local/test)/Formula/kubeswitch.rb"
+          brew audit --strict local/test/kubeswitch
+          brew install local/test/kubeswitch
+          brew test local/test/kubeswitch
+          kubeswitch version
+
+  publish:
+    name: Publish to the tap
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v4
+
+      - name: Generate the formula
+        env:
+          VERSION: ${{ inputs.version }}
+        run: scripts/homebrew-formula.sh "$VERSION" > "$RUNNER_TEMP/kubeswitch.rb"
+
+      - name: Push it to the tap
+        env:
+          TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}
+          TAP: ${{ github.repository_owner }}/homebrew-tap
+          SOURCE: ${{ github.repository }}
+          VERSION: ${{ inputs.version }}
+        run: |
+          if [ -z "$TOKEN" ]; then
+            echo "::notice::The HOMEBREW_TAP_TOKEN secret is not set, so the formula was not pushed to $TAP"
+            exit 0
+          fi
+          git -c init.defaultBranch=main clone "https://x-access-token:$TOKEN@github.com/$TAP.git" "$RUNNER_TEMP/tap"
+          cd "$RUNNER_TEMP/tap"
+          mkdir -p Formula
+          cp "$RUNNER_TEMP/kubeswitch.rb" Formula/kubeswitch.rb
+          if [ ! -f README.md ]; then
+            printf '# Homebrew tap for kubeswitch\n\n```sh\nbrew install %s/tap/kubeswitch\n```\n\nThe formula is published by the release workflow of https://github.com/%s.\n' \
+              "${TAP%%/*}" "$SOURCE" > README.md
+          fi
+          git add Formula/kubeswitch.rb README.md
+          if git diff --cached --quiet; then
+            echo "The tap already has the formula for kubeswitch $VERSION"
+            exit 0
+          fi
+          git -c user.name='github-actions[bot]' \
+              -c user.email='41898282+github-actions[bot]@users.noreply.github.com' \
+              commit -m "kubeswitch $VERSION"
+          git push origin HEAD

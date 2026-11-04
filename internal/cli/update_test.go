@@ -168,3 +168,41 @@ func TestUpdateSuggestsSudo(t *testing.T) {
 		t.Fatalf("expected a sudo hint, got %v", err)
 	}
 }
+
+func TestUpdateLeavesHomebrewInstallsToBrew(t *testing.T) {
+	fakeRelease(t, "v9.9.9", false)
+	// Homebrew links bin/kubeswitch to the binary in its cellar.
+	root := t.TempDir()
+	cellar := filepath.Join(root, "Cellar", "kubeswitch", "1.0.0", "bin")
+	if err := os.MkdirAll(cellar, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	exe := filepath.Join(cellar, "kubeswitch")
+	if err := os.WriteFile(exe, []byte("#!/bin/sh\necho old\n"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	link := filepath.Join(root, "bin", "kubeswitch")
+	if err := os.MkdirAll(filepath.Dir(link), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Symlink(exe, link); err != nil {
+		t.Fatal(err)
+	}
+	executablePath = func() (string, error) { return link, nil } // restored by fakeRelease's cleanup
+
+	_, err := execute(t, "", "update")
+	if err == nil || !strings.Contains(err.Error(), "brew upgrade kubeswitch") {
+		t.Fatalf("expected a Homebrew hint, got %v", err)
+	}
+	if data, _ := os.ReadFile(exe); string(data) != "#!/bin/sh\necho old\n" {
+		t.Error("a Homebrew-managed binary must not be replaced")
+	}
+
+	out, err := execute(t, "", "update", "--check")
+	if err != nil {
+		t.Fatalf("update --check failed: %v\n%s", err, out)
+	}
+	if !strings.Contains(out, `Run "brew upgrade kubeswitch" to install it.`) {
+		t.Errorf("unexpected output:\n%s", out)
+	}
+}

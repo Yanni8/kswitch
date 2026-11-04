@@ -172,3 +172,17 @@ func Replace(exe string, binary []byte) error {
 	}
 	return os.Rename(tmp.Name(), exe)
 }
+
+// InstalledWithHomebrew reports whether exe, the resolved path of the
+// running binary, lies in a Homebrew cellar, such as
+// /opt/homebrew/Cellar/kubeswitch/1.2.3/bin/kubeswitch. Homebrew keeps
+// track of what it installed there, so such a binary is updated with
+// "brew upgrade" rather than replaced in place.
+func InstalledWithHomebrew(exe string) bool {
+	for _, dir := range strings.Split(filepath.ToSlash(exe), "/") {
+		if dir == "Cellar" {
+			return true
+		}
+	}
+	return false
+}

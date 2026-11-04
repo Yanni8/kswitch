@@ -18,7 +18,7 @@ PLATFORMS := linux/amd64 linux/arm64 darwin/amd64 darwin/arm64 windows/amd64 win
 COPYRIGHT := Copyright 2026 Yannick Müller
 SPDX      := SPDX-License-Identifier: Apache-2.0
 
-.PHONY: all build run test fmt vet tidy install licenses headers dist clean
+.PHONY: all build run test fmt vet tidy install licenses headers dist formula clean
 
 all: build
 
@@ -74,7 +74,7 @@ licenses:
 
 ## headers: add the copyright header to source files that lack it
 headers:
-	@{ find . -name '*.go' -not -path './.git/*'; printf '%s\n' ./install.sh ./Makefile .github/workflows/*.yml; } | \
+	@{ find . -name '*.go' -not -path './.git/*'; printf '%s\n' ./install.sh ./scripts/*.sh ./Makefile .github/workflows/*.yml; } | \
 	while read -r f; do \
 		head -n 5 "$$f" | grep -q 'SPDX-License-Identifier' && continue; \
 		case "$$f" in \
@@ -106,6 +106,10 @@ dist:
 	done
 	cd dist && sha256sum *.tar.gz *.zip > checksums.txt
 	@ls -1 dist
+
+## formula: print the Homebrew formula for the archives in ./dist (after "make dist")
+formula:
+	@scripts/homebrew-formula.sh $(VERSION) dist/checksums.txt
 
 ## clean: remove build artifacts
 clean:

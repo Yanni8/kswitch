@@ -4,7 +4,8 @@
 name: Release
 
 # Publishes a GitHub release with binaries for every supported platform
-# whenever a version tag such as v1.2.3 is pushed.
+# whenever a version tag such as v1.2.3 is pushed, and then its Homebrew
+# formula (see homebrew.yml).
 on:
   push:
     tags:
@@ -51,3 +52,13 @@ jobs:
           gh release create "$GITHUB_REF_NAME" dist/* \
             --draft --verify-tag --generate-notes --title "$GITHUB_REF_NAME" $prerelease
           gh release edit "$GITHUB_REF_NAME" --draft=false
+
+  homebrew:
+    name: Homebrew
+    needs: release
+    # Pre-releases stay out of the tap.
+    if: ${{ !contains(github.ref_name, '-') }}
+    uses: ./.github/workflows/homebrew.yml
+    with:
+      version: ${{ github.ref_name }}
+    secrets: inherit

@@ -51,7 +51,9 @@ jobs:
           # The Linux runner image ships Homebrew but does not put it on PATH.
           command -v brew >/dev/null || eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
           # Formulae are audited and installed from a tap, so make a local one.
+          # Homebrew loads a third-party tap's formulae only once it is trusted.
           brew tap-new --no-git local/test
+          brew trust local/test
           mkdir -p "$(brew --repository local/test)/Formula"
           cp "$RUNNER_TEMP/kubeswitch.rb" "$(brew --repository local/test)/Formula/kubeswitch.rb"
           brew audit --strict local/test/kubeswitch

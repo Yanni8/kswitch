@@ -17,8 +17,10 @@ brew install Yanni8/tap/kubeswitch
 
 This adds the [Yanni8/homebrew-tap](https://github.com/Yanni8/homebrew-tap)
 tap and installs the release binary for your machine together with the
-bash, zsh, and fish completions. Later, `brew upgrade kubeswitch` brings
-it to the latest release.
+bash, zsh, and fish completions. Since Homebrew 6, formulae from
+third-party taps load only once you trust them: installing by the full
+name as above trusts just this one formula (see `brew trust`). Later,
+`brew upgrade kubeswitch` brings it to the latest release.
 
 ### Install script
 
